@@ -13,6 +13,8 @@ import {
 } from "@/lib/world";
 
 const MAP_WIDTH = 1000;
+/** Shared by the map and its loading placeholder so the page does not jump. */
+export const MAP_FRAME_HEIGHT = "h-72 sm:h-[26rem] lg:h-[34rem]";
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 64;
 /** Shapes smaller than this (in map units, ~40 km each) get a clickable dot. */
@@ -127,13 +129,28 @@ function transformForShape(shape: Shape): Transform {
   const width = shape.bounds[1][0] - shape.bounds[0][0];
   const height = shape.bounds[1][1] - shape.bounds[0][1];
   // Territories that straddle the antimeridian report a near-global box.
-  const reliable = width < MAP_WIDTH * 0.55 && width > 0 && height > 0;
-  const k = reliable
-    ? Math.min(MAP_WIDTH / (width * 2.6), MAP_HEIGHT / (height * 2.6))
-    : 3;
-  const scale = Math.min(MAX_ZOOM, Math.max(2, k));
-  const cx = reliable ? (shape.bounds[0][0] + shape.bounds[1][0]) / 2 : shape.cx;
-  const cy = reliable ? (shape.bounds[0][1] + shape.bounds[1][1]) / 2 : shape.cy;
+  const straddles = width > MAP_WIDTH * 0.55;
+  // Micro-states collapse to a point at this resolution, so pick a fixed zoom
+  // that shows their neighbourhood around the marker dot.
+  const pointLike = Math.max(width, height) < 1.5;
+
+  let scale: number;
+  if (straddles) scale = 3;
+  else if (pointLike) scale = 14;
+  else
+    scale = Math.min(
+      MAP_WIDTH / (width * 2.6),
+      MAP_HEIGHT / (height * 2.6)
+    );
+  scale = Math.min(MAX_ZOOM, Math.max(2, scale));
+
+  const usesBounds = !straddles && !pointLike;
+  const cx = usesBounds
+    ? (shape.bounds[0][0] + shape.bounds[1][0]) / 2
+    : shape.cx;
+  const cy = usesBounds
+    ? (shape.bounds[0][1] + shape.bounds[1][1]) / 2
+    : shape.cy;
   return clampTransform({
     k: scale,
     x: MAP_WIDTH / 2 - cx * scale,
@@ -414,7 +431,10 @@ export function WorldMap({
         role="group"
         aria-label="Interaktive Weltkarte. Pfeiltasten verschieben, Plus und Minus zoomen, 0 setzt zurück."
         onKeyDown={handleKeyDown}
-        className="relative overflow-hidden rounded-3xl ring-1 ring-foreground/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        className={cn(
+          "relative overflow-hidden rounded-3xl ring-1 ring-foreground/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+          MAP_FRAME_HEIGHT
+        )}
         style={{ backgroundColor: "var(--map-ocean)" }}
       >
         <svg
@@ -422,7 +442,6 @@ export function WorldMap({
           viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
           preserveAspectRatio="xMidYMid meet"
           className="block h-full w-full cursor-grab touch-none active:cursor-grabbing"
-          style={{ aspectRatio: `${MAP_WIDTH} / ${MAP_HEIGHT}` }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={endPointer}

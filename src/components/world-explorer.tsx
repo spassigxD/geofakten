@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, Compass, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 import { CountryPanel, CountryPanelEmpty } from "@/components/country-panel";
 import { CountrySearch } from "@/components/country-search";
-import { WorldMap } from "@/components/world-map";
+import { MAP_FRAME_HEIGHT, WorldMap } from "@/components/world-map";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/sheet";
 import { addExtracted, useStore } from "@/lib/store";
 import { useMediaQuery } from "@/lib/use-media-query";
+import { cn } from "@/lib/utils";
 import {
   type CountryDossier,
   cachedDossier,
@@ -50,7 +51,12 @@ function MapFallback({
   onRetry: () => void;
 }) {
   return (
-    <div className="flex aspect-[1000/509] w-full items-center justify-center rounded-3xl bg-muted/70 ring-1 ring-foreground/10">
+    <div
+      className={cn(
+        "flex w-full items-center justify-center rounded-3xl bg-muted/70 ring-1 ring-foreground/10",
+        MAP_FRAME_HEIGHT
+      )}
+    >
       {error ? (
         <div className="max-w-sm px-6 text-center">
           <Alert variant="destructive" className="text-left">
@@ -84,6 +90,7 @@ export function WorldExplorer() {
   const [focusNonce, setFocusNonce] = useState(0);
 
   const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const sheetBodyRef = useRef<HTMLDivElement | null>(null);
   const { decks } = useStore();
 
   const selected = countryById(selectedId);
@@ -197,18 +204,17 @@ export function WorldExplorer() {
 
   return (
     <div className="space-y-6">
-      <header className="max-w-2xl">
+      <header className="max-w-3xl">
         <p className="text-xs font-medium tracking-[0.22em] text-primary uppercase">
           Weltkarte
         </p>
-        <h1 className="font-heading mt-3 text-4xl leading-[1.1] font-semibold tracking-tight sm:text-5xl">
+        <h1 className="font-heading mt-2 text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">
           Jedes Land antippen, Fakten sofort lesen.
         </h1>
-        <p className="mt-4 text-base leading-7 text-muted-foreground">
-          {COUNTRY_TOTAL} Staaten und ihre Außengebiete auf einer Karte. Ein
-          Klick zeigt Hauptstadt, Einwohnerzahl, Fläche, Sprachen, Staatsform
-          und Währung – live aus der deutschen Wikipedia geladen. Zoome tief
-          genug hinein, um auch Monaco, Nauru oder Tuvalu zu treffen.
+        <p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7">
+          {COUNTRY_TOTAL} Staaten und ihre Außengebiete auf einer Karte – live
+          aus der deutschen Wikipedia. Zoome tief genug hinein, um auch Monaco,
+          Nauru oder Tuvalu zu treffen.
         </p>
       </header>
 
@@ -255,7 +261,11 @@ export function WorldExplorer() {
           if (!open) select(null);
         }}
       >
-        <SheetContent side="bottom" className="lg:hidden">
+        <SheetContent
+          side="bottom"
+          initialFocus={sheetBodyRef}
+          className="lg:hidden"
+        >
           {selected ? (
             <>
               <SheetHeader className="sr-only">
@@ -264,7 +274,11 @@ export function WorldExplorer() {
                   Fakten zu {selected.name} aus der deutschen Wikipedia.
                 </SheetDescription>
               </SheetHeader>
-              <div className="min-h-0 overflow-y-auto overscroll-contain pt-4">
+              <div
+                ref={sheetBodyRef}
+                tabIndex={-1}
+                className="min-h-0 flex-1 overflow-y-auto overscroll-contain pt-4 outline-none"
+              >
                 {panel}
               </div>
             </>
