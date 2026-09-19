@@ -11,7 +11,9 @@ npm install
 npm run dev
 ```
 
-The app is at [http://127.0.0.1:4731](http://127.0.0.1:4731).
+Live: [https://spassigxd.github.io/geofakten/](https://spassigxd.github.io/geofakten/)
+
+Locally: [http://127.0.0.1:4731](http://127.0.0.1:4731).
 
 ```bash
 npm run build

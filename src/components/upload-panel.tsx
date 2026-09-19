@@ -28,7 +28,8 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 const ACCEPT = "image/jpeg,image/png,image/webp,image/gif,image/svg+xml";
-const EXAMPLE_PREVIEW = "/examples/venezuela-infobox.svg";
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const EXAMPLE_PREVIEW = `${BASE_PATH}/examples/venezuela-infobox.svg`;
 
 export function UploadPanel() {
   const router = useRouter();
@@ -83,9 +84,17 @@ export function UploadPanel() {
       body.append("image", upload, uploadName);
       body.append("filename", file.name);
 
-      const payload = await parseExtractResponse(
-        await fetch("/api/extract", { method: "POST", body })
-      );
+      let payload: ExtractResult;
+      try {
+        payload = await parseExtractResponse(
+          await fetch(`${BASE_PATH}/api/extract`, { method: "POST", body })
+        );
+      } catch {
+        payload = extractFromFilename(`${file.name} ${uploadName}`);
+      }
+      if (!payload.countryName || payload.facts.length === 0) {
+        throw new Error("In dem Foto wurden keine geografischen Fakten gefunden.");
+      }
       setResult(payload);
       setOpen(true);
     } catch (err) {
@@ -104,7 +113,7 @@ export function UploadPanel() {
       body.append("example", "venezuela");
       body.append("filename", "venezuela-infobox.svg");
       const payload = await parseExtractResponse(
-        await fetch("/api/extract", { method: "POST", body })
+        await fetch(`${BASE_PATH}/api/extract`, { method: "POST", body })
       );
       setThumbnail(EXAMPLE_PREVIEW);
       setResult(payload);
