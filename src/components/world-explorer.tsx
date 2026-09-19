@@ -89,7 +89,7 @@ export function WorldExplorer() {
   const [loading, setLoading] = useState(false);
   const [focusNonce, setFocusNonce] = useState(0);
 
-  const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const isDesktop = useMediaQuery("(min-width: 1280px)");
   const sheetBodyRef = useRef<HTMLDivElement | null>(null);
   const { decks } = useStore();
 
@@ -218,7 +218,7 @@ export function WorldExplorer() {
         </p>
       </header>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_23rem] lg:items-start">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start">
         <div className="space-y-3">
           <CountrySearch onSelect={(id) => select(id, true)} />
           {collection ? (
@@ -245,7 +245,7 @@ export function WorldExplorer() {
           </p>
         </div>
 
-        <aside className="hidden max-h-[calc(100dvh-7rem)] overflow-y-auto rounded-2xl bg-card py-4 ring-1 ring-foreground/10 lg:sticky lg:top-24 lg:block">
+        <aside className="hidden max-h-[calc(100dvh-7rem)] overflow-y-auto rounded-2xl bg-card py-4 ring-1 ring-foreground/10 xl:sticky xl:top-24 xl:block">
           {panel ?? (
             <CountryPanelEmpty
               suggestions={suggestions}
@@ -264,7 +264,7 @@ export function WorldExplorer() {
         <SheetContent
           side="bottom"
           initialFocus={sheetBodyRef}
-          className="lg:hidden"
+          className="xl:hidden"
         >
           {selected ? (
             <>
@@ -287,7 +287,7 @@ export function WorldExplorer() {
       </Sheet>
 
       {!selected ? (
-        <div className="flex items-center gap-2 rounded-2xl bg-card px-4 py-3 text-sm text-muted-foreground ring-1 ring-foreground/10 lg:hidden">
+        <div className="flex items-center gap-2 rounded-2xl bg-card px-4 py-3 text-sm text-muted-foreground ring-1 ring-foreground/10 xl:hidden">
           <Compass className="size-4 shrink-0 text-primary" />
           Tippe ein Land an – die Fakten öffnen sich als Karte von unten.
         </div>

@@ -13,8 +13,13 @@ import {
 } from "@/lib/world";
 
 const MAP_WIDTH = 1000;
-/** Shared by the map and its loading placeholder so the page does not jump. */
-export const MAP_FRAME_HEIGHT = "h-72 sm:h-[26rem] lg:h-[34rem]";
+/**
+ * Shared by the map and its loading placeholder so the page does not jump.
+ * Phones get a viewport-relative box; from `sm` up the frame follows the
+ * projection's aspect ratio so the world fills it without letterboxing.
+ */
+export const MAP_FRAME_HEIGHT =
+  "h-[52vh] max-h-[26rem] min-h-[17rem] sm:h-auto sm:aspect-[1000/520] sm:max-h-[34rem]";
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 64;
 /** Shapes smaller than this (in map units, ~40 km each) get a clickable dot. */
@@ -167,8 +172,8 @@ const Shapes = memo(function Shapes({
   selectedId: string | null;
   zoom: number;
 }) {
-  const dotRadius = 4.6 / zoom;
-  const hitRadius = 10 / zoom;
+  const dotRadius = 4.8 / zoom;
+  const hitRadius = 13 / zoom;
   const selected = shapes.find((shape) => shape.id === selectedId);
   return (
     <>
