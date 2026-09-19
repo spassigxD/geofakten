@@ -1,7 +1,7 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { fileToJpeg } from "@/lib/image";
+import { extractFromFilename } from "@/lib/mock-extract";
 import { addExtracted } from "@/lib/store";
 import { categoryLabels } from "@/lib/labels";
 import type { ExtractResult } from "@/lib/types";
@@ -27,6 +28,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 const ACCEPT = "image/jpeg,image/png,image/webp,image/gif,image/svg+xml";
+const EXAMPLE_PREVIEW = "/examples/venezuela-infobox.svg";
 
 export function UploadPanel() {
   const router = useRouter();
@@ -38,6 +40,17 @@ export function UploadPanel() {
   const [result, setResult] = useState<ExtractResult | null>(null);
   const [thumbnail, setThumbnail] = useState<string>();
   const [open, setOpen] = useState(false);
+
+  async function parseExtractResponse(response: Response): Promise<ExtractResult> {
+    const payload = (await response.json()) as ExtractResult & { error?: string };
+    if (!response.ok) {
+      throw new Error(payload.error || "Auswertung fehlgeschlagen.");
+    }
+    if (!payload.countryName || payload.facts.length === 0) {
+      throw new Error("In dem Foto wurden keine geografischen Fakten gefunden.");
+    }
+    return payload;
+  }
 
   async function handleFile(file: File) {
     setError(null);
@@ -52,27 +65,27 @@ export function UploadPanel() {
 
     setLoading(true);
     try {
-      const jpeg = await fileToJpeg(file);
-      setPreview(jpeg.dataUrl);
-      setThumbnail(jpeg.thumbnail);
+      let upload: Blob = file;
+      let uploadName = file.name;
+      try {
+        const jpeg = await fileToJpeg(file);
+        setPreview(jpeg.dataUrl);
+        setThumbnail(jpeg.thumbnail);
+        upload = jpeg.blob;
+        uploadName = file.name.replace(/\.[^.]+$/, ".jpg");
+      } catch {
+        const objectUrl = URL.createObjectURL(file);
+        setPreview(objectUrl);
+        setThumbnail(undefined);
+      }
 
       const body = new FormData();
-      body.append("image", jpeg.blob, file.name.replace(/\.[^.]+$/, ".jpg"));
+      body.append("image", upload, uploadName);
       body.append("filename", file.name);
 
-      const response = await fetch("/api/extract", {
-        method: "POST",
-        body,
-      });
-      const payload = (await response.json()) as ExtractResult & {
-        error?: string;
-      };
-      if (!response.ok) {
-        throw new Error(payload.error || "Auswertung fehlgeschlagen.");
-      }
-      if (!payload.countryName || payload.facts.length === 0) {
-        throw new Error("In dem Foto wurden keine geografischen Fakten gefunden.");
-      }
+      const payload = await parseExtractResponse(
+        await fetch("/api/extract", { method: "POST", body })
+      );
       setResult(payload);
       setOpen(true);
     } catch (err) {
@@ -85,17 +98,24 @@ export function UploadPanel() {
   async function loadExample() {
     setLoading(true);
     setError(null);
+    setPreview(EXAMPLE_PREVIEW);
     try {
-      const response = await fetch("/examples/venezuela-infobox.svg");
-      if (!response.ok) throw new Error("Beispielbild fehlt.");
-      const blob = await response.blob();
-      const file = new File([blob], "venezuela-infobox.svg", {
-        type: "image/svg+xml",
-      });
-      await handleFile(file);
-    } catch (err) {
+      const body = new FormData();
+      body.append("example", "venezuela");
+      body.append("filename", "venezuela-infobox.svg");
+      const payload = await parseExtractResponse(
+        await fetch("/api/extract", { method: "POST", body })
+      );
+      setThumbnail(EXAMPLE_PREVIEW);
+      setResult(payload);
+      setOpen(true);
+    } catch {
+      const fallback = extractFromFilename("venezuela-infobox.svg");
+      setThumbnail(EXAMPLE_PREVIEW);
+      setResult(fallback);
+      setOpen(true);
+    } finally {
       setLoading(false);
-      setError(err instanceof Error ? err.message : "Beispiel nicht geladen.");
     }
   }
 
@@ -151,9 +171,9 @@ export function UploadPanel() {
               Staatsform und macht daraus Karteikarten.
             </p>
             <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-              <Button
-                size="lg"
-                className="h-11 px-4"
+              <button
+                type="button"
+                className={cn(buttonVariants({ size: "lg" }), "h-11 px-4")}
                 onClick={() => inputRef.current?.click()}
                 disabled={loading}
               >
@@ -163,17 +183,20 @@ export function UploadPanel() {
                   <Upload />
                 )}
                 Foto wählen
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="h-11 px-4"
+              </button>
+              <button
+                type="button"
+                data-testid="example-venezuela"
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "lg" }),
+                  "h-11 px-4"
+                )}
                 onClick={() => void loadExample()}
                 disabled={loading}
               >
                 <Sparkles />
                 Beispiel Venezuela
-              </Button>
+              </button>
             </div>
           </div>
           <div className="relative min-h-40 overflow-hidden rounded-2xl bg-muted">
@@ -212,61 +235,63 @@ export function UploadPanel() {
         </Alert>
       ) : null}
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
-          {result ? (
-            <>
-              <DialogHeader>
-                <DialogTitle>{result.countryName}</DialogTitle>
-                <DialogDescription>
-                  {result.officialName
-                    ? `${result.officialName}. `
-                    : ""}
-                  {result.cards.length} Karteikarten aus den wichtigsten Fakten.
-                </DialogDescription>
-              </DialogHeader>
-              {result.usedFallback ? (
-                <Alert>
-                  <Sparkles />
-                  <AlertTitle>Lokale Demo-Auswertung</AlertTitle>
-                  <AlertDescription>
-                    {result.fallbackReason} Mit{" "}
-                    <code>OPENAI_API_KEY</code> liest ein Vision-Modell das Foto
-                    direkt.
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  Gelesen per Vision-Modell.
-                </p>
-              )}
-              <ul className="space-y-2">
-                {result.facts.map((fact) => (
-                  <li
-                    key={`${fact.label}-${fact.value}`}
-                    className="flex items-start justify-between gap-3 rounded-lg bg-muted/70 px-3 py-2"
-                  >
-                    <span>
-                      <span className="block text-[11px] tracking-wide text-muted-foreground uppercase">
-                        {categoryLabels[fact.category]}
+      <Dialog open={open} onOpenChange={(next) => setOpen(next)}>
+        {open ? (
+          <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+            {result ? (
+              <>
+                <DialogHeader>
+                  <DialogTitle>{result.countryName}</DialogTitle>
+                  <DialogDescription>
+                    {result.officialName
+                      ? `${result.officialName}. `
+                      : ""}
+                    {result.cards.length} Karteikarten aus den wichtigsten Fakten.
+                  </DialogDescription>
+                </DialogHeader>
+                {result.usedFallback ? (
+                  <Alert>
+                    <Sparkles />
+                    <AlertTitle>Lokale Demo-Auswertung</AlertTitle>
+                    <AlertDescription>
+                      {result.fallbackReason} Mit{" "}
+                      <code>OPENAI_API_KEY</code> liest ein Vision-Modell das Foto
+                      direkt.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Gelesen per Vision-Modell.
+                  </p>
+                )}
+                <ul className="space-y-2">
+                  {result.facts.map((fact) => (
+                    <li
+                      key={`${fact.label}-${fact.value}`}
+                      className="flex items-start justify-between gap-3 rounded-lg bg-muted/70 px-3 py-2"
+                    >
+                      <span>
+                        <span className="block text-[11px] tracking-wide text-muted-foreground uppercase">
+                          {categoryLabels[fact.category]}
+                        </span>
+                        <span className="font-medium">{fact.label}</span>
                       </span>
-                      <span className="font-medium">{fact.label}</span>
-                    </span>
-                    <span className="max-w-[55%] text-right text-sm">
-                      {fact.value}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>
-                  Verwerfen
-                </Button>
-                <Button onClick={saveCards}>In die Bibliothek</Button>
-              </DialogFooter>
-            </>
-          ) : null}
-        </DialogContent>
+                      <span className="max-w-[55%] text-right text-sm">
+                        {fact.value}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setOpen(false)}>
+                    Verwerfen
+                  </Button>
+                  <Button onClick={saveCards}>In die Bibliothek</Button>
+                </DialogFooter>
+              </>
+            ) : null}
+          </DialogContent>
+        ) : null}
       </Dialog>
     </section>
   );

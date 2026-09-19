@@ -13,7 +13,7 @@ import type {
 } from "./types";
 
 let snapshot: StoreData = emptyStore;
-let hydrated = false;
+let didLoad = false;
 const listeners = new Set<() => void>();
 
 function emit() {
@@ -22,20 +22,24 @@ function emit() {
   listeners.forEach((listener) => listener());
 }
 
-function hydrate() {
-  if (hydrated || typeof window === "undefined") return;
+function loadClientStore() {
+  if (didLoad || typeof window === "undefined") return;
   snapshot = loadStore();
-  hydrated = true;
+  didLoad = true;
 }
 
 function subscribe(listener: () => void) {
-  hydrate();
   listeners.add(listener);
+  if (!didLoad && typeof window !== "undefined") {
+    loadClientStore();
+    queueMicrotask(() => {
+      listeners.forEach((item) => item());
+    });
+  }
   return () => listeners.delete(listener);
 }
 
 function getSnapshot(): StoreData {
-  hydrate();
   return snapshot;
 }
 
@@ -47,16 +51,22 @@ export function useStore(): StoreData {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
+function subscribeHydration(onChange: () => void) {
+  let active = true;
+  queueMicrotask(() => {
+    if (active) onChange();
+  });
+  return () => {
+    active = false;
+  };
+}
+
 export function useHydrated(): boolean {
-  return useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false
-  );
+  return useSyncExternalStore(subscribeHydration, () => true, () => false);
 }
 
 export function addExtracted(result: ExtractResult, thumbnail?: string): string {
-  hydrate();
+  loadClientStore();
   const now = Date.now();
   const deckId = crypto.randomUUID();
   const deck: Deck = {
@@ -97,7 +107,7 @@ export function addExtracted(result: ExtractResult, thumbnail?: string): string 
 }
 
 export function rateCard(cardId: string, rating: Rating) {
-  hydrate();
+  loadClientStore();
   snapshot = {
     ...snapshot,
     cards: snapshot.cards.map((card) =>
@@ -108,7 +118,7 @@ export function rateCard(cardId: string, rating: Rating) {
 }
 
 export function deleteDeck(deckId: string) {
-  hydrate();
+  loadClientStore();
   snapshot = {
     decks: snapshot.decks.filter((deck) => deck.id !== deckId),
     cards: snapshot.cards.filter((card) => card.deckId !== deckId),
@@ -117,7 +127,7 @@ export function deleteDeck(deckId: string) {
 }
 
 export function deleteCard(cardId: string) {
-  hydrate();
+  loadClientStore();
   const card = snapshot.cards.find((item) => item.id === cardId);
   const cards = snapshot.cards.filter((item) => item.id !== cardId);
   let decks = snapshot.decks;
@@ -132,7 +142,7 @@ export function deleteCard(cardId: string) {
 }
 
 export function clearAll() {
-  hydrate();
+  loadClientStore();
   snapshot = emptyStore;
   emit();
 }

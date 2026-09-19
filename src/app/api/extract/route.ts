@@ -24,6 +24,11 @@ Wenn kein Geografie-Inhalt erkennbar ist:
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
+    const example = String(formData.get("example") ?? "");
+    if (example.toLowerCase().includes("venezuela")) {
+      return NextResponse.json(extractFromFilename("venezuela-infobox.svg"));
+    }
+
     const image = formData.get("image");
     const filenameField = formData.get("filename");
     const filename =

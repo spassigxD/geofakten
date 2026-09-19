@@ -36,11 +36,17 @@ function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const image = new Image();
+    const timer = window.setTimeout(() => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Das Bild hat zu lange zum Laden gebraucht."));
+    }, 8000);
     image.onload = () => {
+      window.clearTimeout(timer);
       URL.revokeObjectURL(url);
       resolve(image);
     };
     image.onerror = () => {
+      window.clearTimeout(timer);
       URL.revokeObjectURL(url);
       reject(new Error("Das Bild konnte nicht gelesen werden."));
     };
