@@ -1,5 +1,6 @@
 "use client";
 
+import { ContinentMap } from "@/components/continent-map";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { EmptyState } from "@/components/empty-state";
@@ -10,7 +11,10 @@ import { rateCard, useHydrated, useStore } from "@/lib/store";
 import type { Flashcard, Rating } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Library, RotateCcw } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+const FLIP_MS = 520;
+const REVEAL_AT_MS = 260;
 
 export function StudySession() {
   const hydrated = useHydrated();
@@ -18,8 +22,12 @@ export function StudySession() {
   const [queue, setQueue] = useState<Flashcard[] | null>(null);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const [answerRevealed, setAnswerRevealed] = useState(false);
+  const [animateFlip, setAnimateFlip] = useState(true);
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [done, setDone] = useState(false);
+  const revealTimer = useRef<number | null>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const liveQueue = useMemo(() => {
     if (!queue) return [];
@@ -30,11 +38,18 @@ export function StudySession() {
   const deck = card ? decks.find((item) => item.id === card.deckId) : undefined;
   const progress =
     liveQueue.length === 0 ? 0 : Math.round((index / liveQueue.length) * 100);
+  const lageCard = card?.category === "lage";
 
   const startRound = useCallback(() => {
+    if (revealTimer.current != null) {
+      window.clearTimeout(revealTimer.current);
+      revealTimer.current = null;
+    }
     setQueue(pickSession(cards));
     setIndex(0);
     setFlipped(false);
+    setAnswerRevealed(false);
+    setAnimateFlip(false);
     setRatings([]);
     setDone(false);
   }, [cards]);
@@ -43,17 +58,41 @@ export function StudySession() {
     setQueue(pickSession(cards));
   }
 
+  const reveal = useCallback(() => {
+    if (flipped || done) return;
+    setAnimateFlip(true);
+    setFlipped(true);
+    if (revealTimer.current != null) {
+      window.clearTimeout(revealTimer.current);
+      revealTimer.current = null;
+    }
+    if (prefersReducedMotion) {
+      setAnswerRevealed(true);
+      return;
+    }
+    revealTimer.current = window.setTimeout(() => {
+      setAnswerRevealed(true);
+      revealTimer.current = null;
+    }, REVEAL_AT_MS);
+  }, [done, flipped, prefersReducedMotion]);
+
   const rate = useCallback(
     (rating: Rating) => {
-      if (!flipped || !card || done) return;
+      if (!flipped || !answerRevealed || !card || done) return;
+      if (revealTimer.current != null) {
+        window.clearTimeout(revealTimer.current);
+        revealTimer.current = null;
+      }
       rateCard(card.id, rating);
       setRatings((current) => [...current, rating]);
+      setAnimateFlip(false);
       setFlipped(false);
+      setAnswerRevealed(false);
       const next = index + 1;
       if (next >= liveQueue.length) setDone(true);
       else setIndex(next);
     },
-    [card, done, flipped, index, liveQueue.length]
+    [answerRevealed, card, done, flipped, index, liveQueue.length]
   );
 
   useEffect(() => {
@@ -61,16 +100,22 @@ export function StudySession() {
       if (done || !card) return;
       if (event.key === " " || event.key === "Enter") {
         event.preventDefault();
-        setFlipped(true);
+        reveal();
       }
-      if (!flipped) return;
+      if (!answerRevealed) return;
       if (event.key === "1") rate(1);
       if (event.key === "2") rate(2);
       if (event.key === "3") rate(3);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [card, done, flipped, rate]);
+  }, [answerRevealed, card, done, rate, reveal]);
+
+  useEffect(() => {
+    return () => {
+      if (revealTimer.current != null) window.clearTimeout(revealTimer.current);
+    };
+  }, []);
 
   if (!hydrated) {
     return (
@@ -111,7 +156,7 @@ export function StudySession() {
           {ratings.length === 0 ? "Keine Karten in dieser Runde" : "Guter Durchgang"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Karten, die du mit „Nochmal lernen“ bewertet hast, kommen als Nächstes
+          Karten, die du mit „{ratingLabels[1]}“ bewertet hast, kommen als Nächstes
           wieder. Die anderen rücken weiter nach hinten.
         </p>
         <dl className="mt-8 grid grid-cols-3 gap-3 text-sm">
@@ -129,6 +174,8 @@ export function StudySession() {
     );
   }
 
+  const ratingDisabled = !answerRevealed;
+
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
       <div>
@@ -143,16 +190,26 @@ export function StudySession() {
 
       <button
         type="button"
-        onClick={() => setFlipped(true)}
-        className="w-full text-left [perspective:1400px]"
+        onClick={reveal}
+        disabled={flipped}
+        aria-pressed={answerRevealed}
+        className="study-flip w-full text-left"
       >
         <div
           className={cn(
-            "relative min-h-[320px] w-full transition-transform duration-500 [transform-style:preserve-3d] sm:min-h-[380px]",
-            flipped && "[transform:rotateY(180deg)]"
+            "study-flip-inner min-h-[320px] w-full sm:min-h-[380px]",
+            lageCard && "min-h-[500px] sm:min-h-[540px]",
+            flipped && "is-flipped",
+            (!animateFlip || prefersReducedMotion) && "no-anim"
           )}
+          style={{ transitionDuration: `${FLIP_MS}ms` }}
         >
-          <article className="absolute inset-0 rounded-3xl border bg-card p-6 shadow-sm [backface-visibility:hidden] sm:p-8">
+          <article
+            className={cn(
+              "study-flip-face rounded-3xl border bg-card p-6 shadow-sm sm:p-8",
+              answerRevealed && "is-concealed"
+            )}
+          >
             <p className="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
               {card.countryName} · {categoryLabels[card.category]}
             </p>
@@ -163,22 +220,38 @@ export function StudySession() {
               Tippen oder Leertaste: Antwort zeigen
             </p>
           </article>
-          <article className="absolute inset-0 rounded-3xl border bg-[oklch(0.97_0.02_92)] p-6 shadow-sm [backface-visibility:hidden] [transform:rotateY(180deg)] sm:p-8">
-            <p className="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
-              Antwort
-            </p>
-            <p className="font-heading mt-6 text-2xl leading-snug font-semibold sm:text-3xl">
-              {card.answer}
-            </p>
-            {card.extraHint ? (
-              <p className="mt-6 text-sm leading-6 text-muted-foreground">
-                {card.extraHint}
-              </p>
-            ) : null}
-            {deck?.officialName ? (
-              <p className="mt-4 text-xs text-muted-foreground">
-                {deck.officialName}
-              </p>
+          <article
+            className={cn(
+              "study-flip-face study-flip-face-back rounded-3xl border bg-[oklch(0.97_0.02_92)] p-6 shadow-sm sm:p-8",
+              !answerRevealed && "is-concealed"
+            )}
+            aria-hidden={!answerRevealed}
+          >
+            {answerRevealed ? (
+              <>
+                <p className="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
+                  Antwort
+                </p>
+                <p className="font-heading mt-6 text-2xl leading-snug font-semibold sm:text-3xl">
+                  {card.answer}
+                </p>
+                {lageCard ? (
+                  <ContinentMap
+                    countryName={card.countryName}
+                    lageText={card.answer}
+                  />
+                ) : null}
+                {card.extraHint ? (
+                  <p className="mt-6 text-sm leading-6 text-muted-foreground">
+                    {card.extraHint}
+                  </p>
+                ) : null}
+                {deck?.officialName ? (
+                  <p className="mt-4 text-xs text-muted-foreground">
+                    {deck.officialName}
+                  </p>
+                ) : null}
+              </>
             ) : null}
           </article>
         </div>
@@ -188,8 +261,8 @@ export function StudySession() {
         <Button
           size="lg"
           variant="outline"
-          className="h-12 border-[oklch(0.82_0.06_50)] bg-[oklch(0.97_0.03_55)] text-[oklch(0.42_0.12_45)]"
-          disabled={!flipped}
+          className="h-auto min-h-12 whitespace-normal px-3 py-2 text-center leading-tight"
+          disabled={ratingDisabled}
           onClick={() => rate(1)}
         >
           {ratingLabels[1]}
@@ -197,16 +270,16 @@ export function StudySession() {
         <Button
           size="lg"
           variant="outline"
-          className="h-12"
-          disabled={!flipped}
+          className="h-auto min-h-12 whitespace-normal px-3 py-2 text-center leading-tight"
+          disabled={ratingDisabled}
           onClick={() => rate(2)}
         >
           {ratingLabels[2]}
         </Button>
         <Button
           size="lg"
-          className="h-12"
-          disabled={!flipped}
+          className="h-auto min-h-12 whitespace-normal px-3 py-2 text-center leading-tight"
+          disabled={ratingDisabled}
           onClick={() => rate(3)}
         >
           {ratingLabels[3]}
@@ -228,4 +301,16 @@ function Stat({ label, value }: { label: string; value: number }) {
       </dd>
     </div>
   );
+}
+
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduced(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  return reduced;
 }

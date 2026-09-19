@@ -1,5 +1,20 @@
 export type Mastery = "learn" | "good" | "mastered";
 
+export type ContinentId =
+  | "africa"
+  | "asia"
+  | "europe"
+  | "north-america"
+  | "oceania"
+  | "south-america";
+
+export interface CountryLocation {
+  continent: ContinentId;
+  iso: string;
+  lat: number;
+  lon: number;
+}
+
 export type FactCategory =
   | "lage"
   | "hauptstadt"

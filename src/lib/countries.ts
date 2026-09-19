@@ -1,9 +1,10 @@
-import type { Fact } from "./types";
+import type { ContinentId, CountryLocation, Fact } from "./types";
 
 export interface CountryProfile {
   name: string;
   officialName?: string;
   aliases: string[];
+  location: CountryLocation;
   facts: Fact[];
 }
 
@@ -13,6 +14,15 @@ function f(
   category: Fact["category"]
 ): Fact {
   return { label, value, category };
+}
+
+function loc(
+  continent: ContinentId,
+  iso: string,
+  lat: number,
+  lon: number
+): CountryLocation {
+  return { continent, iso, lat, lon };
 }
 
 export const COUNTRY_PROFILES: CountryProfile[] = [
@@ -25,6 +35,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
       "bolivarische republik",
       "caracas",
     ],
+    location: loc("south-america", "VEN", 8.0, -66.0),
     facts: [
       f("Lage", "an der Nordküste Südamerikas, zur Karibik hin", "lage"),
       f("Hauptstadt", "Caracas", "hauptstadt"),
@@ -43,6 +54,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
     name: "Deutschland",
     officialName: "Bundesrepublik Deutschland",
     aliases: ["deutschland", "germany", "bundesrepublik", "berlin"],
+    location: loc("europe", "DEU", 51.2, 10.4),
     facts: [
       f("Lage", "in Mitteleuropa, zwischen Nord- und Ostsee und den Alpen", "lage"),
       f("Hauptstadt", "Berlin", "hauptstadt"),
@@ -57,6 +69,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
     name: "Frankreich",
     officialName: "Französische Republik",
     aliases: ["frankreich", "france", "französische republik", "paris"],
+    location: loc("europe", "FRA", 46.2, 2.2),
     facts: [
       f("Lage", "in Westeuropa, mit Küsten an Atlantik und Mittelmeer", "lage"),
       f("Hauptstadt", "Paris", "hauptstadt"),
@@ -71,6 +84,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
     name: "Japan",
     officialName: "Staat Japan",
     aliases: ["japan", "nippon", "nihon", "tokio", "tokyo"],
+    location: loc("asia", "JPN", 36.2, 138.3),
     facts: [
       f("Lage", "Inselstaat in Ostasien, im Pazifik vor dem asiatischen Festland", "lage"),
       f("Hauptstadt", "Tokio", "hauptstadt"),
@@ -85,6 +99,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
     name: "Brasilien",
     officialName: "Föderative Republik Brasilien",
     aliases: ["brasilien", "brazil", "brasil", "brasília", "brasilia"],
+    location: loc("south-america", "BRA", -10.8, -53.1),
     facts: [
       f("Lage", "nimmt den Großteil Südamerikas ein, Atlantikküste im Osten", "lage"),
       f("Hauptstadt", "Brasília", "hauptstadt"),
@@ -99,6 +114,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
     name: "Kenia",
     officialName: "Republik Kenia",
     aliases: ["kenia", "kenya", "nairobi"],
+    location: loc("africa", "KEN", 0.5, 37.9),
     facts: [
       f("Lage", "in Ostafrika, am Indischen Ozean, am Äquator", "lage"),
       f("Hauptstadt", "Nairobi", "hauptstadt"),
@@ -113,6 +129,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
     name: "Kanada",
     officialName: "Kanada",
     aliases: ["kanada", "canada", "ottawa"],
+    location: loc("north-america", "CAN", 56.1, -106.3),
     facts: [
       f("Lage", "in Nordamerika, vom Atlantik bis zum Pazifik, nördlich der USA", "lage"),
       f("Hauptstadt", "Ottawa", "hauptstadt"),
@@ -127,6 +144,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
     name: "Ägypten",
     officialName: "Arabische Republik Ägypten",
     aliases: ["ägypten", "agypten", "egypt", "kairo", "cairo"],
+    location: loc("africa", "EGY", 26.8, 30.8),
     facts: [
       f("Lage", "in Nordafrika und auf der Sinai-Halbinsel, am Mittelmeer und Roten Meer", "lage"),
       f("Hauptstadt", "Kairo", "hauptstadt"),
@@ -141,6 +159,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
     name: "Indien",
     officialName: "Republik Indien",
     aliases: ["indien", "india", "new delhi", "delhi"],
+    location: loc("asia", "IND", 22.4, 79.0),
     facts: [
       f("Lage", "in Südasien, zwischen Arabischem Meer und Golf von Bengalen", "lage"),
       f("Hauptstadt", "New Delhi", "hauptstadt"),
@@ -155,6 +174,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
     name: "Australien",
     officialName: "Commonwealth of Australia",
     aliases: ["australien", "australia", "canberra"],
+    location: loc("oceania", "AUS", -25.3, 133.8),
     facts: [
       f("Lage", "Kontinent und Inselstaat zwischen Indischem und Pazifischem Ozean", "lage"),
       f("Hauptstadt", "Canberra", "hauptstadt"),
@@ -169,6 +189,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
     name: "Norwegen",
     officialName: "Königreich Norwegen",
     aliases: ["norwegen", "norway", "oslo"],
+    location: loc("europe", "NOR", 64.5, 11.0),
     facts: [
       f("Lage", "in Nordeuropa auf der Skandinavischen Halbinsel, an der Nordsee und dem Nordmeer", "lage"),
       f("Hauptstadt", "Oslo", "hauptstadt"),
@@ -183,6 +204,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
     name: "Mexiko",
     officialName: "Vereinigte Mexikanische Staaten",
     aliases: ["mexiko", "mexico", "méxico", "ciudad de mexico", "mexico city"],
+    location: loc("north-america", "MEX", 23.6, -102.5),
     facts: [
       f("Lage", "in Nordamerika, zwischen USA, Pazifik, Golf von Mexiko und Guatemala/Belize", "lage"),
       f("Hauptstadt", "Mexiko-Stadt", "hauptstadt"),
@@ -197,6 +219,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
     name: "Südafrika",
     officialName: "Republik Südafrika",
     aliases: ["südafrika", "sudafrica", "south africa", "pretoria", "kapstadt"],
+    location: loc("africa", "ZAF", -29.0, 25.1),
     facts: [
       f("Lage", "an der Südspitze Afrikas, zwischen Atlantik und Indischem Ozean", "lage"),
       f("Hauptstadt", "Pretoria (Regierung), Kapstadt (Parlament), Bloemfontein (Justiz)", "hauptstadt"),
@@ -211,6 +234,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
     name: "Italien",
     officialName: "Italienische Republik",
     aliases: ["italien", "italy", "italia", "rom", "rome"],
+    location: loc("europe", "ITA", 42.8, 12.6),
     facts: [
       f("Lage", "in Südeuropa auf der Apenninhalbinsel, im Mittelmeer", "lage"),
       f("Hauptstadt", "Rom", "hauptstadt"),
@@ -225,6 +249,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
     name: "Polen",
     officialName: "Republik Polen",
     aliases: ["polen", "poland", "polska", "warschau", "warsaw"],
+    location: loc("europe", "POL", 52.1, 19.4),
     facts: [
       f("Lage", "in Mitteleuropa, an der Ostsee, zwischen Deutschland und Belarus/Ukraine", "lage"),
       f("Hauptstadt", "Warschau", "hauptstadt"),
@@ -239,6 +264,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
     name: "Spanien",
     officialName: "Königreich Spanien",
     aliases: ["spanien", "spain", "españa", "espana", "madrid"],
+    location: loc("europe", "ESP", 40.4, -3.7),
     facts: [
       f("Lage", "auf der Iberischen Halbinsel in Südwesteuropa, plus Balearen und Kanaren", "lage"),
       f("Hauptstadt", "Madrid", "hauptstadt"),
@@ -253,6 +279,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
     name: "China",
     officialName: "Volksrepublik China",
     aliases: ["china", "volksrepublik china", "peking", "beijing"],
+    location: loc("asia", "CHN", 35.9, 104.2),
     facts: [
       f("Lage", "in Ostasien, vom Pazifik bis nach Zentralasien", "lage"),
       f("Hauptstadt", "Peking", "hauptstadt"),
@@ -273,6 +300,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
       "amerika",
       "washington",
     ],
+    location: loc("north-america", "USA", 39.8, -98.6),
     facts: [
       f("Lage", "in Nordamerika, zwischen Atlantik und Pazifik, plus Alaska und Hawaii", "lage"),
       f("Hauptstadt", "Washington, D.C.", "hauptstadt"),
@@ -287,6 +315,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
     name: "Türkei",
     officialName: "Republik Türkei",
     aliases: ["türkei", "turkei", "turkey", "türkiye", "ankara"],
+    location: loc("asia", "TUR", 39.0, 35.2),
     facts: [
       f("Lage", "zwischen Südosteuropa und Vorderasien, um Bosporus und Dardanellen", "lage"),
       f("Hauptstadt", "Ankara", "hauptstadt"),
@@ -301,6 +330,7 @@ export const COUNTRY_PROFILES: CountryProfile[] = [
     name: "Argentinien",
     officialName: "Argentinische Republik",
     aliases: ["argentinien", "argentina", "buenos aires"],
+    location: loc("south-america", "ARG", -35.0, -65.0),
     facts: [
       f("Lage", "im Süden Südamerikas, vom Gran Chaco bis Feuerland", "lage"),
       f("Hauptstadt", "Buenos Aires", "hauptstadt"),

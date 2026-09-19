@@ -11,8 +11,8 @@ export default function StudyPage() {
           Lernsitzung
         </h1>
         <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-          Fällige und unsichere Karten zuerst. Nach der Antwort entscheidest du,
-          ob die Karte nochmal, gut oder sehr gut sitzt.
+          Fällige und unsichere Karten zuerst. Nach der Antwort wählst du
+          Nochmal lernen, Gut können oder Sehr gut können.
         </p>
       </header>
       <StudySession />

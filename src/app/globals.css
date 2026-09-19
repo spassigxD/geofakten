@@ -139,3 +139,50 @@
     font-family: var(--font-heading), ui-serif, Georgia, serif;
   }
 }
+
+/* Study-card 3D flip: webkit prefixes + face masking so the answer cannot leak. */
+.study-flip {
+  perspective: 1400px;
+  -webkit-perspective: 1400px;
+}
+
+.study-flip-inner {
+  display: grid;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  transition: transform 520ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.study-flip-inner.is-flipped {
+  transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg);
+}
+
+.study-flip-inner.no-anim {
+  transition: none;
+}
+
+.study-flip-face {
+  grid-area: 1 / 1;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(1px);
+  -webkit-transform: translateZ(1px);
+}
+
+.study-flip-face-back {
+  transform: rotateY(180deg) translateZ(1px);
+  -webkit-transform: rotateY(180deg) translateZ(1px);
+}
+
+.study-flip-face.is-concealed {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .study-flip-inner {
+    transition: none;
+  }
+}

@@ -27,7 +27,7 @@ npm start
 3. Open **Lernen**, reveal the answer, and rate how well you knew it.
 4. Filter the library by learning bucket.
 
-Without an API key the app still works: it matches the filename against a built-in country set (or falls back to Venezuela) so you can demo the full study loop.
+Without an API key the app still works: it matches the filename against a built-in country set (or falls back to Venezuela) so you can demo the full study loop. Lage cards show a static continent map (Natural Earth, bundled) with the country highlighted — no map API key needed.
 
 ## Optional vision model
 
