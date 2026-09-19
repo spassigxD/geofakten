@@ -44,6 +44,17 @@ export function questionFor(country: string, fact: Fact): { question: string; an
         question: `Welche Währung hat ${c}?`,
         answer: fact.value,
       };
+    case "flagge":
+      if (fact.label === "Landesflagge") {
+        return {
+          question: `Wie sieht die Flagge von ${c} aus?`,
+          answer: `die Flagge von ${c}`,
+        };
+      }
+      return {
+        question: "Welches Land hat diese Flagge?",
+        answer: c,
+      };
     default:
       return {
         question: `${fact.label} ${den}${c}?`.replace("  ", " "),
@@ -53,10 +64,14 @@ export function questionFor(country: string, fact: Fact): { question: string; an
 }
 
 export function generateCards(countryName: string, facts: Fact[]): DraftCard[] {
-  const unique = dedupeFacts(facts).slice(0, 8);
-  return unique.map((fact) => {
+  const unique = dedupeFacts(facts);
+  const flags = unique.filter((fact) => fact.category === "flagge");
+  const rest = unique
+    .filter((fact) => fact.category !== "flagge")
+    .slice(0, 8);
+  return [...flags, ...rest].map((fact) => {
     const { question, answer } = questionFor(countryName, fact);
-    const extraHint = unique
+    const extraHint = rest
       .filter((other) => other !== fact)
       .slice(0, 3)
       .map((other) => `${other.label}: ${other.value}`)
@@ -74,7 +89,7 @@ export function dedupeFacts(facts: Fact[]): Fact[] {
   const seen = new Set<string>();
   const out: Fact[] = [];
   for (const fact of facts) {
-    const key = `${fact.category}:${fact.value.toLowerCase()}`;
+    const key = `${fact.category}:${fact.label}:${fact.value.toLowerCase()}`;
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(fact);
@@ -90,6 +105,7 @@ const CATEGORIES: FactCategory[] = [
   "sprache",
   "regierung",
   "waehrung",
+  "flagge",
   "sonstiges",
 ];
 

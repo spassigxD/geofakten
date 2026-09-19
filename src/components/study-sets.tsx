@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Layers, Pencil, Plus, Trash2 } from "lucide-react";
+import { Flag, Layers, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { CountrySearch } from "@/components/country-search";
@@ -30,7 +30,7 @@ import {
 import {
   ALL_FACT_CATEGORIES,
   defaultStudyCategories,
-  STUDY_CATEGORIES,
+  STACK_CATEGORIES,
   studySetSummary,
 } from "@/lib/study";
 import type { FactCategory, StudySet } from "@/lib/types";
@@ -44,7 +44,9 @@ export function StudySetList({
 }) {
   const hydrated = useHydrated();
   const { studySets, cards } = useStore();
-  const [editing, setEditing] = useState<StudySet | "new" | null>(null);
+  const [editing, setEditing] = useState<StudySet | "new" | "flags" | null>(
+    null
+  );
 
   if (!hydrated) {
     return (
@@ -66,14 +68,25 @@ export function StudySetList({
           </p>
         </div>
         {allowCreate ? (
-          <Button
-            type="button"
-            className="h-10 px-4"
-            onClick={() => setEditing("new")}
-          >
-            <Plus />
-            Stapel anlegen
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              className="h-10 px-4"
+              onClick={() => setEditing("new")}
+            >
+              <Plus />
+              Stapel anlegen
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 px-4"
+              onClick={() => setEditing("flags")}
+            >
+              <Flag />
+              Flaggen-Stapel
+            </Button>
+          </div>
         ) : null}
       </div>
 
@@ -81,7 +94,7 @@ export function StudySetList({
         <EmptyState
           icon={<Layers className="size-5" />}
           title="Noch keine Stapel"
-          description="Lege einen Stapel in der Bibliothek an oder wähle auf der Weltkarte einen Kontinent – dann lernst du nur diese Karten."
+          description="Lege einen Fakten- oder Flaggen-Stapel an, oder wähle auf der Weltkarte einen Kontinent."
           actionHref="/weltkarte"
           actionLabel="Kontinent auf der Weltkarte wählen"
         />
@@ -140,7 +153,12 @@ export function StudySetList({
 
       <StudySetEditor
         open={editing !== null}
-        initial={editing === "new" ? null : editing}
+        initial={
+          editing === "new" || editing === "flags" || editing === null
+            ? null
+            : editing
+        }
+        flagsNew={editing === "flags"}
         onOpenChange={(open) => {
           if (!open) setEditing(null);
         }}
@@ -152,18 +170,21 @@ export function StudySetList({
 function StudySetEditor({
   open,
   initial,
+  flagsNew,
   onOpenChange,
 }: {
   open: boolean;
   initial: StudySet | null;
+  flagsNew?: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {open ? (
         <StudySetEditorForm
-          key={initial?.id ?? "new"}
+          key={initial?.id ?? (flagsNew ? "flags" : "new")}
           initial={initial}
+          flagsNew={flagsNew}
           onOpenChange={onOpenChange}
         />
       ) : null}
@@ -173,14 +194,18 @@ function StudySetEditor({
 
 function StudySetEditorForm({
   initial,
+  flagsNew,
   onOpenChange,
 }: {
   initial: StudySet | null;
+  flagsNew?: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [name, setName] = useState(initial?.name ?? "");
+  const [name, setName] = useState(
+    initial?.name ?? (flagsNew ? "Flaggen lernen" : "")
+  );
   const [categories, setCategories] = useState<FactCategory[]>(
-    initial?.categories ?? defaultStudyCategories()
+    initial?.categories ?? (flagsNew ? ["flagge"] : defaultStudyCategories())
   );
   const [countryIds, setCountryIds] = useState<string[]>(
     initial?.countryIds ?? []
@@ -202,11 +227,16 @@ function StudySetEditorForm({
     <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {initial ? "Stapel bearbeiten" : "Neuen Stapel anlegen"}
+            {initial
+              ? "Stapel bearbeiten"
+              : flagsNew
+                ? "Flaggen-Stapel anlegen"
+                : "Neuen Stapel anlegen"}
           </DialogTitle>
           <DialogDescription>
-            Länder hinzufügen oder entfernen und festlegen, welche Faktenarten
-            im Stapel stecken. Bestehende Bewertungen bleiben erhalten.
+            {flagsNew
+              ? "Suche Länder oder nimm später einen Kontinent von der Weltkarte. Jede Flagge wird als Flagge → Land und Land → Flagge geübt."
+              : "Länder hinzufügen oder entfernen und festlegen, welche Faktenarten im Stapel stecken. Bestehende Bewertungen bleiben erhalten."}
           </DialogDescription>
         </DialogHeader>
 
@@ -219,7 +249,7 @@ function StudySetEditorForm({
               id="stack-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="z. B. Südamerika – Hauptstädte"
+              placeholder="z. B. Flaggen von Europa"
             />
           </div>
 
@@ -229,7 +259,7 @@ function StudySetEditorForm({
               categories={
                 initial?.categories.includes("sonstiges")
                   ? ALL_FACT_CATEGORIES
-                  : STUDY_CATEGORIES
+                  : STACK_CATEGORIES
               }
               selected={categories}
               onChange={setCategories}
@@ -292,7 +322,7 @@ function StudySetEditorForm({
             disabled={!canSave}
             onClick={() => {
               if (!canSave) return;
-              if (initial) {
+              if (initial?.id) {
                 updateStudySet(initial.id, { name, categories, countryIds });
                 toast.success(`${name.trim()} aktualisiert.`);
               } else {

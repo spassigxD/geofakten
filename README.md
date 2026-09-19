@@ -42,7 +42,11 @@ Every country and dependency on one pan- and zoomable map. Clicking a shape open
 
 ### Lernstapel
 
-Named stacks live next to the global card pile. Create one from a continent on the map (Afrika, Asien, …) or in **Bibliothek → Stapel anlegen**. Each stack is a list of countries plus fact types (Hauptstadt, Lage, Einwohner, Fläche, Sprache, Staatsform, Währung). You can rename it, add/remove countries, and change the fact types. Deleting a stack does not delete the cards or their ratings.
+Named stacks live next to the global card pile. Create one from a continent on the map (Afrika, Asien, …) or in **Bibliothek → Stapel anlegen**. Each stack is a list of countries plus fact types (Hauptstadt, Lage, Einwohner, Fläche, Sprache, Staatsform, Währung, Flagge). **Flaggen lernen** on the map (or **Flaggen-Stapel** in the library) builds flag ↔ country cards. You can rename a stack, add/remove countries, and change the fact types. Deleting a stack does not delete the cards or their ratings.
+
+Lage cards draw a Natural Earth continent map and highlight the country by ISO-A3 / German / English name. Micro-states missing from the 110m outlines (Vatican, San Marino, …) get a zoomed inset plus a marker.
+
+Capital answers show the flag from [flagcdn](https://flagcdn.com/) (Wikimedia-style SVG fallbacks if the PNG fails).
 
 **Lernen** has a stack picker: **Alle Karten** or a named stack. Sessions still use the Nochmal lernen / Gut können / Sehr gut können buckets on whatever cards are in the chosen pile.
 
@@ -54,6 +58,7 @@ Deep link: `/lernen?stapel=<id>`.
 | --- | --- | --- |
 | Map geometry, German country names, ISO and Wikidata ids | [Natural Earth](https://www.naturalearthdata.com/) 1:50m Admin 0 countries | public domain |
 | Live facts (capital, population, area, languages, currency, government, heads of state) | [Wikidata](https://www.wikidata.org/) REST statements, fetched in the browser | CC0 |
+| Flags on capital / flag cards | [flagcdn](https://flagcdn.com/) (PNG/SVG), with [country-flag-icons](https://github.com/catamphetamine/country-flag-icons) as fallback | public CDN |
 | Article intro, thumbnail, short description | [German Wikipedia](https://de.wikipedia.org/) REST summary, fetched in the browser | CC BY-SA 4.0 |
 | Offline fallback facts | Wikidata snapshot taken at build time, committed to the repo | CC0 |
 

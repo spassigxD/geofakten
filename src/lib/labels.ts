@@ -20,6 +20,7 @@ export const categoryLabels: Record<FactCategory, string> = {
   sprache: "Sprache",
   regierung: "Staatsform",
   waehrung: "Währung",
+  flagge: "Flagge",
   sonstiges: "Weitere Fakten",
 };
 

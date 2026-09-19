@@ -1,6 +1,7 @@
 "use client";
 
 import { ContinentMap } from "@/components/continent-map";
+import { CountryFlag } from "@/components/country-flag";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { EmptyState } from "@/components/empty-state";
@@ -14,6 +15,7 @@ import {
   rateCard,
 } from "@/lib/store";
 import { cardsInStudySet } from "@/lib/study";
+import { iso2ForCountry, isFlagRecognizeCard, isFlagRevealCard } from "@/lib/flags";
 import type { Flashcard, Rating } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Layers, Library, RotateCcw } from "lucide-react";
@@ -59,6 +61,19 @@ export function StudySession() {
   const progress =
     liveQueue.length === 0 ? 0 : Math.round((index / liveQueue.length) * 100);
   const lageCard = card?.category === "lage";
+  const iso2 = card
+    ? iso2ForCountry(card.countryId, card.countryName)
+    : undefined;
+  const flagOnQuestion = Boolean(
+    card &&
+      card.category === "flagge" &&
+      isFlagRecognizeCard(card.question)
+  );
+  const flagOnAnswer = Boolean(
+    card &&
+      (card.category === "hauptstadt" ||
+        (card.category === "flagge" && isFlagRevealCard(card.question)))
+  );
 
   const [queueSetId, setQueueSetId] = useState<string | null | undefined>(
     undefined
@@ -261,7 +276,8 @@ export function StudySession() {
         <div
           className={cn(
             "study-flip-inner min-h-[320px] w-full sm:min-h-[380px]",
-            lageCard && "min-h-[500px] sm:min-h-[540px]",
+            (lageCard || flagOnQuestion || flagOnAnswer) &&
+              "min-h-[500px] sm:min-h-[540px]",
             flipped && "is-flipped",
             (!animateFlip || prefersReducedMotion) && "no-anim"
           )}
@@ -274,11 +290,24 @@ export function StudySession() {
             )}
           >
             <p className="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
-              {card.countryName} · {categoryLabels[card.category]}
+              {flagOnQuestion
+                ? categoryLabels[card.category]
+                : `${card.countryName} · ${categoryLabels[card.category]}`}
             </p>
             <h2 className="font-heading mt-8 text-2xl leading-snug font-semibold sm:text-3xl">
               {card.question}
             </h2>
+            {flagOnQuestion ? (
+              <div className="mt-8">
+                <CountryFlag
+                  key={`${card.id}-q`}
+                  iso2={iso2}
+                  countryName={card.countryName}
+                  decorative
+                  className="h-28 max-w-[14rem]"
+                />
+              </div>
+            ) : null}
             <p className="absolute right-6 bottom-6 text-sm text-muted-foreground">
               Tippen oder Leertaste: Antwort zeigen
             </p>
@@ -298,9 +327,20 @@ export function StudySession() {
                 <p className="font-heading mt-6 text-2xl leading-snug font-semibold sm:text-3xl">
                   {card.answer}
                 </p>
+                {flagOnAnswer ? (
+                  <div className="mt-6">
+                    <CountryFlag
+                      key={`${card.id}-a`}
+                      iso2={iso2}
+                      countryName={card.countryName}
+                      className="h-24 max-w-[12rem]"
+                    />
+                  </div>
+                ) : null}
                 {lageCard ? (
                   <ContinentMap
                     countryName={card.countryName}
+                    countryId={card.countryId}
                     lageText={card.answer}
                   />
                 ) : null}

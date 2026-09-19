@@ -99,6 +99,7 @@ export function WorldExplorer() {
   const [continentDialog, setContinentDialog] = useState<ContinentId | null>(
     null
   );
+  const [continentMode, setContinentMode] = useState<"facts" | "flags">("facts");
   const [fullscreen, setFullscreen] = useState(false);
 
   const isDesktop = useMediaQuery("(min-width: 1280px)");
@@ -260,9 +261,10 @@ export function WorldExplorer() {
     );
   };
 
-  const pickContinent = (continent: ContinentId) => {
+  const pickContinent = (continent: ContinentId, mode: "facts" | "flags") => {
     setFocusContinent(continent);
     setFocusNonce((nonce) => nonce + 1);
+    setContinentMode(mode);
     setContinentDialog(continent);
   };
 
@@ -433,6 +435,7 @@ export function WorldExplorer() {
 
       <ContinentStudyDialog
         continent={continentDialog}
+        mode={continentMode}
         open={Boolean(continentDialog)}
         onOpenChange={(open) => {
           if (!open) setContinentDialog(null);

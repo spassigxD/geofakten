@@ -23,6 +23,7 @@ export type FactCategory =
   | "sprache"
   | "regierung"
   | "waehrung"
+  | "flagge"
   | "sonstiges";
 
 export type ExtractSource = "vision" | "mock" | "wikipedia";

@@ -59,10 +59,16 @@ export const kindLabels: Record<CountryKind, string> = {
 
 export function countryById(id: string | null | undefined): CountryMeta | null {
   if (!id) return null;
-  return BY_ID.get(id) ?? null;
+  return BY_ID.get(id) ?? BY_ISO2.get(id.toUpperCase()) ?? null;
 }
 
-function normalize(text: string): string {
+const BY_ISO2 = new Map(
+  WORLD_COUNTRIES.flatMap((country) =>
+    country.iso2 ? [[country.iso2.toUpperCase(), country] as const] : []
+  )
+);
+
+export function normalizeCountryQuery(text: string): string {
   return text
     .toLowerCase()
     .normalize("NFD")
@@ -72,9 +78,88 @@ function normalize(text: string): string {
     .trim();
 }
 
+/** Extra spellings that Wikipedia / learners use but Natural Earth does not. */
+const NAME_ALIASES: Record<string, string> = {
+  vatikanstadt: "VAT",
+  vatikan: "VAT",
+  vatican: "VAT",
+  "vatican city": "VAT",
+  "holy see": "VAT",
+  "the holy see": "VAT",
+  "heiliger stuhl": "VAT",
+  "staat vatikanstadt": "VAT",
+  "staat der vatikanstadt": "VAT",
+  ukraine: "UKR",
+  ukraina: "UKR",
+  "san marino": "SMR",
+  liechtenstein: "LIE",
+  monaco: "MCO",
+  andorra: "AND",
+  "vereinigtes konigreich": "GBR",
+  "grossbritannien": "GBR",
+  "united kingdom": "GBR",
+  "great britain": "GBR",
+};
+
+const NAME_INDEX: { country: CountryMeta; keys: string[] }[] = WORLD_COUNTRIES.map(
+  (country) => ({
+    country,
+    keys: [
+      country.name,
+      country.nameEn,
+      country.officialName ?? "",
+      country.iso2 ?? "",
+      country.iso3 ?? "",
+      country.id,
+    ]
+      .map(normalizeCountryQuery)
+      .filter(Boolean),
+  })
+).sort(
+  (a, b) =>
+    Math.max(...b.keys.map((key) => key.length)) -
+    Math.max(...a.keys.map((key) => key.length))
+);
+
+/**
+ * Resolve a country from an ISO code, German/English name, or a phrase that
+ * contains one (“Vatikanstadt in Europa”, “Holy See”).
+ */
+export function findCountry(query: string | null | undefined): CountryMeta | null {
+  if (!query) return null;
+  const trimmed = query.trim();
+  if (!trimmed) return null;
+  const upper = trimmed.toUpperCase();
+  if (BY_ID.has(upper)) return BY_ID.get(upper) ?? null;
+  if (upper.length === 2 && BY_ISO2.has(upper)) return BY_ISO2.get(upper) ?? null;
+
+  const q = normalizeCountryQuery(trimmed);
+  if (!q) return null;
+  const aliased = NAME_ALIASES[q];
+  if (aliased) return countryById(aliased);
+
+  for (const entry of NAME_INDEX) {
+    if (entry.keys.some((key) => key === q)) return entry.country;
+  }
+
+  if (q.length < 4) return null;
+
+  let best: { country: CountryMeta; len: number } | null = null;
+  for (const entry of NAME_INDEX) {
+    for (const key of entry.keys) {
+      if (key.length < 4) continue;
+      if (q === key || q.includes(key) || key.includes(q)) {
+        const len = key.length;
+        if (!best || len > best.len) best = { country: entry.country, len };
+      }
+    }
+  }
+  return best?.country ?? null;
+}
+
 const SEARCH_INDEX = WORLD_COUNTRIES.map((country) => ({
   country,
-  haystack: normalize(
+  haystack: normalizeCountryQuery(
     [
       country.name,
       country.nameEn,
@@ -84,11 +169,11 @@ const SEARCH_INDEX = WORLD_COUNTRIES.map((country) => ({
       country.iso3 ?? "",
     ].join(" ")
   ),
-  start: normalize(country.name),
+  start: normalizeCountryQuery(country.name),
 }));
 
 export function searchCountries(query: string, limit = 60): CountryMeta[] {
-  const q = normalize(query);
+  const q = normalizeCountryQuery(query);
   if (!q) {
     return WORLD_COUNTRIES.filter((country) => country.kind === "country").slice(
       0,

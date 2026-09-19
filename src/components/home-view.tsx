@@ -166,7 +166,7 @@ function WorldMapPitch() {
           <MapPoint
             icon={<Globe2 className="size-4" />}
             title="Auch als Stapel"
-            text={`Afrika, Asien, Europa – ein Kontinent, die Faktenarten deiner Wahl. Ohne Netz greift der gespeicherte Datensatz, inklusive Zwergstaaten wie ${smallestState.name}.`}
+            text={`Afrika, Asien, Europa – Fakten oder Flaggen. Ohne Netz greift der gespeicherte Datensatz, inklusive Zwergstaaten wie ${smallestState.name}.`}
           />
         </ul>
       </div>

@@ -1,6 +1,12 @@
 import continents from "../data/continents.json";
 import { findCountryProfile } from "@/lib/countries";
 import type { ContinentId, CountryLocation } from "@/lib/types";
+import {
+  findCountry,
+  normalizeCountryQuery,
+  type CountryMeta,
+  countryById,
+} from "@/lib/world";
 
 export type MapView = {
   minLon: number;
@@ -85,16 +91,49 @@ const CONTINENT_HINTS: { pattern: RegExp; continent: ContinentId }[] = [
   },
 ];
 
+export function locationFromMeta(meta: CountryMeta): CountryLocation | null {
+  if (!meta.continent) return null;
+  return {
+    continent: meta.continent,
+    iso: meta.iso3 || meta.id,
+    lat: meta.lat,
+    lon: meta.lon,
+  };
+}
+
 export function resolveMapLocation(
   countryName: string,
-  lageText?: string
+  lageText?: string,
+  countryId?: string
 ): CountryLocation | null {
+  const meta =
+    countryById(countryId) ??
+    findCountry(countryName) ??
+    findCountry(`${countryName} ${lageText ?? ""}`.trim());
+  const fromMeta = meta ? locationFromMeta(meta) : null;
+  if (fromMeta) return fromMeta;
+
   const fromName = findCountryProfile(countryName);
   if (fromName?.location) return fromName.location;
 
   const haystack = `${countryName} ${lageText ?? ""}`;
   const fromText = findCountryProfile(haystack);
   if (fromText?.location) return fromText.location;
+
+  const fromFeature = COUNTRY_FEATURES.find((feature) => {
+    const n = normalizeCountryQuery(feature.name);
+    const q = normalizeCountryQuery(countryName);
+    return n === q || feature.iso === countryName.toUpperCase();
+  });
+  if (fromFeature) {
+    const view = CONTINENT_VIEWS[fromFeature.continent];
+    return {
+      continent: fromFeature.continent,
+      iso: fromFeature.iso,
+      lat: (view.minLat + view.maxLat) / 2,
+      lon: (view.minLon + view.maxLon) / 2,
+    };
+  }
 
   const continent = inferContinent(haystack);
   if (!continent) return null;
@@ -105,6 +144,20 @@ export function resolveMapLocation(
     lat: (view.minLat + view.maxLat) / 2,
     lon: (view.minLon + view.maxLon) / 2,
   };
+}
+
+export function featureMatchesLocation(
+  feature: CountryFeature,
+  location: CountryLocation,
+  countryName?: string,
+  nameEn?: string
+): boolean {
+  if (location.iso && feature.iso === location.iso) return true;
+  const names = [countryName, nameEn]
+    .filter(Boolean)
+    .map((value) => normalizeCountryQuery(value as string));
+  const featureName = normalizeCountryQuery(feature.name);
+  return names.some((name) => name === featureName);
 }
 
 export function inferContinent(text: string): ContinentId | null {
@@ -180,4 +233,67 @@ export function geometryToPath(
     .map((ring) => ringPath(ring, view, width, height))
     .filter((path): path is string => Boolean(path))
     .join(" ");
+}
+
+function walkRings(
+  geometry: CountryFeature["geometry"],
+  visit: (lon: number, lat: number) => void
+) {
+  const rings: number[][][] = [];
+  if (geometry.type === "Polygon") {
+    rings.push(...(geometry.coordinates as number[][][]));
+  } else {
+    for (const polygon of geometry.coordinates as number[][][][]) {
+      rings.push(...polygon);
+    }
+  }
+  for (const ring of rings) {
+    for (const point of ring) visit(point[0], point[1]);
+  }
+}
+
+export function geometryBBox(
+  geometry: CountryFeature["geometry"]
+): MapView | null {
+  let minLon = Infinity;
+  let minLat = Infinity;
+  let maxLon = -Infinity;
+  let maxLat = -Infinity;
+  walkRings(geometry, (lon, lat) => {
+    if (lon < minLon) minLon = lon;
+    if (lat < minLat) minLat = lat;
+    if (lon > maxLon) maxLon = lon;
+    if (lat > maxLat) maxLat = lat;
+  });
+  if (!Number.isFinite(minLon)) return null;
+  return { minLon, minLat, maxLon, maxLat };
+}
+
+export function viewPixelSize(
+  box: MapView,
+  view: MapView,
+  width: number,
+  height: number
+): { w: number; h: number } {
+  const [x0, y0] = project(box.minLon, box.maxLat, view, width, height);
+  const [x1, y1] = project(box.maxLon, box.minLat, view, width, height);
+  return { w: Math.abs(x1 - x0), h: Math.abs(y1 - y0) };
+}
+
+/** Tight crop around a point so micro-states are actually visible. */
+export function zoomViewAround(
+  lon: number,
+  lat: number,
+  width: number,
+  height: number,
+  spanLat = 5.5
+): MapView {
+  const aspect = width / height;
+  const spanLon = spanLat * aspect;
+  return {
+    minLon: lon - spanLon,
+    maxLon: lon + spanLon,
+    minLat: lat - spanLat,
+    maxLat: lat + spanLat,
+  };
 }
