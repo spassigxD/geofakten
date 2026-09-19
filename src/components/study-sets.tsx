@@ -235,7 +235,7 @@ function StudySetEditorForm({
           </DialogTitle>
           <DialogDescription>
             {flagsNew
-              ? "Suche Länder oder nimm später einen Kontinent von der Weltkarte. Jede Flagge wird als Flagge → Land und Land → Flagge geübt."
+              ? "Suche Länder oder nimm später einen Kontinent von der Weltkarte. Du siehst die Flagge und nennst das Land."
               : "Länder hinzufügen oder entfernen und festlegen, welche Faktenarten im Stapel stecken. Bestehende Bewertungen bleiben erhalten."}
           </DialogDescription>
         </DialogHeader>

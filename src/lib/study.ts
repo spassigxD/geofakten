@@ -68,14 +68,7 @@ export function factsForCategories(
     allowed.has(fact.category)
   );
   if (allowed.has("flagge") && meta.iso2) {
-    facts.push(
-      { label: "Flagge", value: meta.name, category: "flagge" },
-      {
-        label: "Landesflagge",
-        value: `Flagge von ${meta.name}`,
-        category: "flagge",
-      }
-    );
+    facts.push({ label: "Flagge", value: meta.name, category: "flagge" });
   }
   return facts;
 }

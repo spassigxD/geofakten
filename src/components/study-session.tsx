@@ -15,7 +15,7 @@ import {
   rateCard,
 } from "@/lib/store";
 import { cardsInStudySet } from "@/lib/study";
-import { iso2ForCountry, isFlagRecognizeCard, isFlagRevealCard } from "@/lib/flags";
+import { iso2ForCountry } from "@/lib/flags";
 import type { Flashcard, Rating } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Layers, Library, RotateCcw } from "lucide-react";
@@ -64,16 +64,9 @@ export function StudySession() {
   const iso2 = card
     ? iso2ForCountry(card.countryId, card.countryName)
     : undefined;
-  const flagOnQuestion = Boolean(
-    card &&
-      card.category === "flagge" &&
-      isFlagRecognizeCard(card.question)
-  );
-  const flagOnAnswer = Boolean(
-    card &&
-      (card.category === "hauptstadt" ||
-        (card.category === "flagge" && isFlagRevealCard(card.question)))
-  );
+  const flagCard = card?.category === "flagge";
+  const flagOnQuestion = Boolean(flagCard);
+  const flagOnAnswer = card?.category === "hauptstadt";
 
   const [queueSetId, setQueueSetId] = useState<string | null | undefined>(
     undefined

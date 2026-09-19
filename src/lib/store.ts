@@ -106,15 +106,7 @@ function sameFactCard(card: Flashcard, fact: Fact) {
     );
   }
   if (fact.category === "flagge") {
-    if (fact.label === "Landesflagge") {
-      return (
-        card.category === "flagge" &&
-        card.question.startsWith("Wie sieht die Flagge")
-      );
-    }
-    return (
-      card.category === "flagge" && card.question.includes("diese Flagge")
-    );
+    return card.category === "flagge";
   }
   return card.category === fact.category;
 }

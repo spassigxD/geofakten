@@ -45,12 +45,6 @@ export function questionFor(country: string, fact: Fact): { question: string; an
         answer: fact.value,
       };
     case "flagge":
-      if (fact.label === "Landesflagge") {
-        return {
-          question: `Wie sieht die Flagge von ${c} aus?`,
-          answer: `die Flagge von ${c}`,
-        };
-      }
       return {
         question: "Welches Land hat diese Flagge?",
         answer: c,
@@ -65,7 +59,7 @@ export function questionFor(country: string, fact: Fact): { question: string; an
 
 export function generateCards(countryName: string, facts: Fact[]): DraftCard[] {
   const unique = dedupeFacts(facts);
-  const flags = unique.filter((fact) => fact.category === "flagge");
+  const flags = unique.filter((fact) => fact.category === "flagge").slice(0, 1);
   const rest = unique
     .filter((fact) => fact.category !== "flagge")
     .slice(0, 8);

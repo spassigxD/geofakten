@@ -23,10 +23,7 @@ export function iso2ForCountry(
   return meta?.iso2;
 }
 
-export function isFlagRecognizeCard(question: string): boolean {
-  return question.includes("diese Flagge");
-}
-
-export function isFlagRevealCard(question: string): boolean {
+/** Old country-first prompt — dropped; flag study always shows the flag first. */
+export function isCountryFirstFlagQuestion(question: string): boolean {
   return question.startsWith("Wie sieht die Flagge");
 }

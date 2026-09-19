@@ -42,7 +42,7 @@ Every country and dependency on one pan- and zoomable map. Clicking a shape open
 
 ### Lernstapel
 
-Named stacks live next to the global card pile. Create one from a continent on the map (Afrika, Asien, …) or in **Bibliothek → Stapel anlegen**. Each stack is a list of countries plus fact types (Hauptstadt, Lage, Einwohner, Fläche, Sprache, Staatsform, Währung, Flagge). **Flaggen lernen** on the map (or **Flaggen-Stapel** in the library) builds flag ↔ country cards. You can rename a stack, add/remove countries, and change the fact types. Deleting a stack does not delete the cards or their ratings.
+Named stacks live next to the global card pile. Create one from a continent on the map (Afrika, Asien, …) or in **Bibliothek → Stapel anlegen**. Each stack is a list of countries plus fact types (Hauptstadt, Lage, Einwohner, Fläche, Sprache, Staatsform, Währung, Flagge). **Flaggen lernen** on the map (or **Flaggen-Stapel** in the library) builds flag-first cards: the learner sees the flag and names the country. You can rename a stack, add/remove countries, and change the fact types. Deleting a stack does not delete the cards or their ratings.
 
 Lage cards draw a Natural Earth continent map and highlight the country by ISO-A3 / German / English name. Micro-states missing from the 110m outlines (Vatican, San Marino, …) get a zoomed inset plus a marker.
 

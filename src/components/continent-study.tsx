@@ -140,7 +140,7 @@ function ContinentStudyForm({
         <DialogDescription>
           {countryIds.length} Staaten.
           {flags
-            ? " Jede Flagge wird in beide Richtungen geübt: Flagge → Land und Land → Flagge. Länder kannst du später in der Bibliothek ergänzen oder streichen."
+            ? " Du siehst die Flagge und nennst das Land. Länder kannst du später in der Bibliothek ergänzen oder streichen."
             : " Wähle, welche Fakten in den Stapel kommen – die Karten landen in der Bibliothek und du kannst den Stapel später umbenennen oder Länder ergänzen."}
         </DialogDescription>
       </DialogHeader>
