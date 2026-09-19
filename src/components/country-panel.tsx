@@ -14,21 +14,13 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { FactToggles } from "@/components/fact-toggles";
 import { continentLabels } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 import type { CountryDossier } from "@/lib/wikipedia";
+import type { Fact } from "@/lib/types";
 import { type CountryMeta, kindLabels } from "@/lib/world";
-
-function FactRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-start justify-between gap-3 rounded-lg bg-muted/70 px-3 py-2">
-      <dt className="shrink-0 text-sm font-medium text-muted-foreground">
-        {label}
-      </dt>
-      <dd className="text-right text-sm font-medium">{value}</dd>
-    </div>
-  );
-}
+import { useState } from "react";
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={cn("animate-pulse rounded-lg bg-muted", className)} />;
@@ -89,11 +81,20 @@ export function CountryPanel({
   loading: boolean;
   savedDeckId: string | null;
   onRetry: () => void;
-  onSaveCards: () => void;
+  onSaveCards: (facts: Fact[]) => void;
   className?: string;
 }) {
   const offline = dossier?.source === "offline";
   const facts = dossier?.facts ?? [];
+  const [override, setOverride] = useState<{
+    id: string;
+    labels: string[];
+  } | null>(null);
+  const picked =
+    override?.id === meta.id ? override.labels : facts.map((fact) => fact.label);
+  const setPicked = (labels: string[]) =>
+    setOverride({ id: meta.id, labels });
+  const chosen = facts.filter((fact) => picked.includes(fact.label));
 
   return (
     <div className={cn("flex flex-col gap-4 px-4 pb-5", className)}>
@@ -153,15 +154,34 @@ export function CountryPanel({
           ))}
         </div>
       ) : facts.length > 0 ? (
-        <dl className="space-y-1.5">
-          {facts.map((fact) => (
-            <FactRow
-              key={`${fact.label}-${fact.value}`}
-              label={fact.label}
-              value={fact.value}
-            />
-          ))}
-        </dl>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium">Als Karten übernehmen</p>
+            <button
+              type="button"
+              className="text-xs font-medium text-primary"
+              onClick={() =>
+                setPicked(
+                  picked.length === facts.length
+                    ? []
+                    : facts.map((fact) => fact.label)
+                )
+              }
+            >
+              {picked.length === facts.length ? "Keine" : "Alle"}
+            </button>
+          </div>
+          <FactToggles facts={facts} selected={picked} onChange={setPicked} />
+          {picked.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              Mindestens ein Fakt muss ausgewählt sein.
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              {picked.length} von {facts.length} Fakten werden Karten.
+            </p>
+          )}
+        </div>
       ) : (
         <Alert>
           <WifiOff />
@@ -186,8 +206,8 @@ export function CountryPanel({
           type="button"
           size="lg"
           className="h-10 px-4"
-          onClick={onSaveCards}
-          disabled={facts.length === 0}
+          onClick={() => onSaveCards(chosen)}
+          disabled={chosen.length === 0}
         >
           <Layers />
           {savedDeckId ? "Nochmal als Karten" : "Als Karteikarten lernen"}

@@ -121,6 +121,17 @@ export function randomCountry(exclude?: string | null): CountryMeta {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
+export function countriesOnContinent(
+  continent: ContinentId,
+  sovereignOnly = true
+): CountryMeta[] {
+  return WORLD_COUNTRIES.filter(
+    (country) =>
+      country.continent === continent &&
+      (!sovereignOnly || country.kind === "country")
+  ).sort((a, b) => a.name.localeCompare(b.name, "de"));
+}
+
 const numberFormat = new Intl.NumberFormat("de-DE");
 
 export function formatNumber(value: number): string {

@@ -11,6 +11,8 @@ import {
   type WorldCollection,
   countryById,
 } from "@/lib/world";
+import type { ContinentId } from "@/lib/types";
+import { CONTINENT_VIEWS, type MapView } from "@/lib/geo";
 
 const MAP_WIDTH = 1000;
 /**
@@ -70,6 +72,7 @@ type Shape = {
   id: string;
   name: string;
   kind: CountryKind;
+  continent: ContinentId | null;
   d: string;
   cx: number;
   cy: number;
@@ -97,6 +100,7 @@ function buildShapes(collection: WorldCollection): Shape[] {
       cy: Number.isFinite(cy) ? cy : (bounds[0][1] + bounds[1][1]) / 2,
       size: Math.max(bounds[1][0] - bounds[0][0], bounds[1][1] - bounds[0][1]),
       bounds,
+      continent: meta?.continent ?? feature.properties.continent,
     });
   }
   return shapes;
@@ -163,14 +167,40 @@ function transformForShape(shape: Shape): Transform {
   });
 }
 
+function transformForView(view: MapView): Transform {
+  const northWest = projection([view.minLon, view.maxLat]);
+  const southEast = projection([view.maxLon, view.minLat]);
+  if (!northWest || !southEast) return IDENTITY;
+  const x0 = Math.min(northWest[0], southEast[0]);
+  const y0 = Math.min(northWest[1], southEast[1]);
+  const x1 = Math.max(northWest[0], southEast[0]);
+  const y1 = Math.max(northWest[1], southEast[1]);
+  const width = Math.max(8, x1 - x0);
+  const height = Math.max(8, y1 - y0);
+  const scale = Math.min(
+    MAX_ZOOM,
+    MAP_WIDTH / (width * 1.18),
+    MAP_HEIGHT / (height * 1.18)
+  );
+  const cx = (x0 + x1) / 2;
+  const cy = (y0 + y1) / 2;
+  return clampTransform({
+    k: Math.max(1.25, scale),
+    x: MAP_WIDTH / 2 - cx * scale,
+    y: MAP_HEIGHT / 2 - cy * scale,
+  });
+}
+
 const Shapes = memo(function Shapes({
   shapes,
   selectedId,
   zoom,
+  highlightContinent,
 }: {
   shapes: Shape[];
   selectedId: string | null;
   zoom: number;
+  highlightContinent: ContinentId | null;
 }) {
   const dotRadius = 4.8 / zoom;
   const hitRadius = 13 / zoom;
@@ -184,6 +214,12 @@ const Shapes = memo(function Shapes({
             d={shape.d}
             data-country={shape.id}
             data-kind={shape.kind}
+            data-continent={shape.continent ?? undefined}
+            data-dim={
+              highlightContinent && shape.continent !== highlightContinent
+                ? "true"
+                : undefined
+            }
             data-selected={shape.id === selectedId ? "true" : undefined}
             className="world-shape"
             vectorEffect="non-scaling-stroke"
@@ -232,15 +268,21 @@ export function WorldMap({
   onSelect,
   onRandom,
   focusNonce,
+  focusContinent,
+  highlightContinent,
   className,
+  frameClassName,
 }: {
   collection: WorldCollection;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   onRandom?: () => void;
-  /** Bump to re-centre the map on the current selection. */
+  /** Bump to re-centre the map on the current selection or continent. */
   focusNonce: number;
+  focusContinent?: ContinentId | null;
+  highlightContinent?: ContinentId | null;
   className?: string;
+  frameClassName?: string;
 }) {
   const shapes = useMemo(() => buildShapes(collection), [collection]);
   const byId = useMemo(
@@ -301,10 +343,15 @@ export function WorldMap({
   }, []);
 
   useEffect(() => {
-    if (!focusNonce || !selectedId) return;
+    if (!focusNonce) return;
+    if (focusContinent) {
+      animateTo(transformForView(CONTINENT_VIEWS[focusContinent]));
+      return;
+    }
+    if (!selectedId) return;
     const shape = byId.get(selectedId);
     if (shape) animateTo(transformForShape(shape));
-  }, [focusNonce, selectedId, byId, animateTo]);
+  }, [focusNonce, selectedId, focusContinent, byId, animateTo]);
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -429,7 +476,7 @@ export function WorldMap({
   const hoveredName = hovered ? byId.get(hovered.id)?.name : undefined;
 
   return (
-    <div className={cn("world-map relative", className)}>
+    <div className={cn("world-map relative h-full", className)}>
       <div
         ref={frameRef}
         tabIndex={0}
@@ -438,7 +485,7 @@ export function WorldMap({
         onKeyDown={handleKeyDown}
         className={cn(
           "relative overflow-hidden rounded-3xl ring-1 ring-foreground/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-          MAP_FRAME_HEIGHT
+          frameClassName ?? MAP_FRAME_HEIGHT
         )}
         style={{ backgroundColor: "var(--map-ocean)" }}
       >
@@ -480,6 +527,7 @@ export function WorldMap({
               shapes={shapes}
               selectedId={selectedId}
               zoom={transform.k}
+              highlightContinent={highlightContinent ?? null}
             />
           </g>
         </svg>

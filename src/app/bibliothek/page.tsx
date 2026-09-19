@@ -11,7 +11,8 @@ export default function LibraryPage() {
           Bibliothek
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-          Alle Karten nach Land, Filter für Nochmal lernen, Gut können und Sehr
+          Lernstapel aus Kontinenten oder eigenen Länderlisten – und darunter
+          alle Karten nach Land, Filter für Nochmal lernen, Gut können und Sehr
           gut können. Bewertungen aus den Lernsitzungen steuern, was als
           Nächstes kommt.
         </p>

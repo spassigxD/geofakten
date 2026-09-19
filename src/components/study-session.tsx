@@ -7,10 +7,17 @@ import { EmptyState } from "@/components/empty-state";
 import { MasteryBadge } from "@/components/mastery-badge";
 import { categoryLabels, ratingLabels } from "@/lib/labels";
 import { pickSession } from "@/lib/repetition";
-import { rateCard, useHydrated, useStore } from "@/lib/store";
+import {
+  setActiveStudySet,
+  useHydrated,
+  useStore,
+  rateCard,
+} from "@/lib/store";
+import { cardsInStudySet } from "@/lib/study";
 import type { Flashcard, Rating } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Library, RotateCcw } from "lucide-react";
+import { Layers, Library, RotateCcw } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const FLIP_MS = 520;
@@ -18,7 +25,8 @@ const REVEAL_AT_MS = 260;
 
 export function StudySession() {
   const hydrated = useHydrated();
-  const { cards, decks } = useStore();
+  const { cards, decks, studySets, activeStudySetId } = useStore();
+  const searchParams = useSearchParams();
   const [queue, setQueue] = useState<Flashcard[] | null>(null);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -28,6 +36,18 @@ export function StudySession() {
   const [done, setDone] = useState(false);
   const revealTimer = useRef<number | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
+
+  useEffect(() => {
+    const fromQuery = searchParams.get("stapel");
+    if (fromQuery) setActiveStudySet(fromQuery);
+  }, [searchParams]);
+
+  const activeSet =
+    studySets.find((set) => set.id === activeStudySetId) ?? null;
+  const pool = useMemo(
+    () => cardsInStudySet(cards, activeSet),
+    [cards, activeSet]
+  );
 
   const liveQueue = useMemo(() => {
     if (!queue) return [];
@@ -40,22 +60,33 @@ export function StudySession() {
     liveQueue.length === 0 ? 0 : Math.round((index / liveQueue.length) * 100);
   const lageCard = card?.category === "lage";
 
+  const [queueSetId, setQueueSetId] = useState<string | null | undefined>(
+    undefined
+  );
+
   const startRound = useCallback(() => {
     if (revealTimer.current != null) {
       window.clearTimeout(revealTimer.current);
       revealTimer.current = null;
     }
-    setQueue(pickSession(cards));
+    setQueue(pickSession(pool));
+    setQueueSetId(activeStudySetId);
     setIndex(0);
     setFlipped(false);
     setAnswerRevealed(false);
     setAnimateFlip(false);
     setRatings([]);
     setDone(false);
-  }, [cards]);
+  }, [activeStudySetId, pool]);
 
-  if (hydrated && queue === null && cards.length > 0) {
-    setQueue(pickSession(cards));
+  if (hydrated && queueSetId !== activeStudySetId) {
+    setQueueSetId(activeStudySetId);
+    setQueue(pool.length > 0 ? pickSession(pool) : []);
+    setIndex(0);
+    setFlipped(false);
+    setAnswerRevealed(false);
+    setDone(false);
+    setRatings([]);
   }
 
   const reveal = useCallback(() => {
@@ -117,28 +148,56 @@ export function StudySession() {
     };
   }, []);
 
+  const picker = <StudySetPicker />;
+
   if (!hydrated) {
     return (
-      <div className="rounded-2xl border bg-card px-6 py-16 text-center text-sm text-muted-foreground">
-        Sitzung wird vorbereitet…
+      <div className="space-y-4">
+        {picker}
+        <div className="rounded-2xl border bg-card px-6 py-16 text-center text-sm text-muted-foreground">
+          Sitzung wird vorbereitet…
+        </div>
       </div>
     );
   }
 
   if (cards.length === 0) {
     return (
-      <EmptyState
-        icon={<Library className="size-5" />}
-        title="Noch nichts zu lernen"
-        description="Lade zuerst ein Foto einer Infobox oder Schulbuchseite hoch. Daraus entstehen Karten für die nächste Sitzung."
-      />
+      <div className="space-y-4">
+        {picker}
+        <EmptyState
+          icon={<Library className="size-5" />}
+          title="Noch nichts zu lernen"
+          description="Lade ein Foto hoch, tippe ein Land auf der Weltkarte an oder lege einen Kontinent-Stapel an. Danach erscheint hier die nächste Sitzung."
+          actionHref="/weltkarte"
+          actionLabel="Zur Weltkarte"
+        />
+      </div>
+    );
+  }
+
+  if (pool.length === 0) {
+    return (
+      <div className="space-y-4">
+        {picker}
+        <EmptyState
+          icon={<Layers className="size-5" />}
+          title="Dieser Stapel ist leer"
+          description="Im gewählten Stapel stecken noch keine Karten. Nimm andere Faktenarten, ergänze Länder in der Bibliothek oder lerne alle Karten."
+          actionHref="/bibliothek"
+          actionLabel="Stapel bearbeiten"
+        />
+      </div>
     );
   }
 
   if (queue === null) {
     return (
-      <div className="rounded-2xl border bg-card px-6 py-16 text-center text-sm text-muted-foreground">
-        Sitzung wird vorbereitet…
+      <div className="space-y-4">
+        {picker}
+        <div className="rounded-2xl border bg-card px-6 py-16 text-center text-sm text-muted-foreground">
+          Sitzung wird vorbereitet…
+        </div>
       </div>
     );
   }
@@ -148,7 +207,9 @@ export function StudySession() {
     const good = ratings.filter((value) => value === 2).length;
     const great = ratings.filter((value) => value === 3).length;
     return (
-      <div className="mx-auto max-w-xl rounded-3xl border bg-card px-6 py-12 text-center">
+      <div className="space-y-4">
+        {picker}
+        <div className="mx-auto max-w-xl rounded-3xl border bg-card px-6 py-12 text-center">
         <p className="text-xs font-medium tracking-[0.2em] text-primary uppercase">
           Sitzung beendet
         </p>
@@ -170,6 +231,7 @@ export function StudySession() {
             Noch eine Runde
           </Button>
         </div>
+        </div>
       </div>
     );
   }
@@ -178,6 +240,7 @@ export function StudySession() {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
+      {picker}
       <div>
         <div className="mb-2 flex items-center justify-between text-sm">
           <span className="text-muted-foreground">
@@ -288,6 +351,35 @@ export function StudySession() {
       <p className="text-center text-xs text-muted-foreground">
         Tasten 1 / 2 / 3 bewerten die Karte, sobald die Antwort sichtbar ist.
       </p>
+    </div>
+  );
+}
+
+function StudySetPicker() {
+  const { studySets, cards, activeStudySetId } = useStore();
+  if (studySets.length === 0) return null;
+
+  return (
+    <div className="mx-auto w-full max-w-2xl">
+      <label className="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
+        Stapel
+      </label>
+      <select
+        className="mt-1.5 h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        value={activeStudySetId ?? ""}
+        onChange={(event) => setActiveStudySet(event.target.value || null)}
+        aria-label="Lernstapel wählen"
+      >
+        <option value="">Alle Karten ({cards.length})</option>
+        {studySets.map((set) => {
+          const count = cardsInStudySet(cards, set).length;
+          return (
+            <option key={set.id} value={set.id}>
+              {set.name} ({count})
+            </option>
+          );
+        })}
+      </select>
     </div>
   );
 }

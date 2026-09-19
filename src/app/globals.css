@@ -189,8 +189,8 @@
   fill: var(--map-land-muted);
 }
 
-.world-shape:hover {
-  fill: var(--map-hover);
+.world-shape[data-dim="true"] {
+  opacity: 0.38;
 }
 
 .world-shape[data-selected="true"] {

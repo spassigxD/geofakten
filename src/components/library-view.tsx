@@ -2,6 +2,7 @@
 
 import { EmptyState } from "@/components/empty-state";
 import { MasteryBadge } from "@/components/mastery-badge";
+import { StudySetList } from "@/components/study-sets";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -62,16 +63,31 @@ export function LibraryView() {
 
   if (cards.length === 0) {
     return (
-      <EmptyState
-        icon={<Library className="size-5" />}
-        title="Die Bibliothek ist leer"
-        description="Noch keine Karteikarten. Lade ein Foto einer Infobox hoch oder nimm das Beispiel Venezuela – danach erscheinen die Karten hier, sortiert nach Lernstand."
-      />
+      <div className="space-y-10">
+        <StudySetList />
+        <EmptyState
+          icon={<Library className="size-5" />}
+          title="Noch keine Karten"
+          description="Lade ein Foto einer Infobox hoch, nimm das Beispiel Venezuela oder lege auf der Weltkarte einen Kontinent-Stapel an."
+          actionHref="/weltkarte"
+          actionLabel="Zur Weltkarte"
+        />
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
+      <StudySetList />
+
+      <section className="space-y-6">
+        <div>
+          <h2 className="font-heading text-2xl font-semibold">Alle Karten</h2>
+          <p className="text-sm text-muted-foreground">
+            Die globale Sammlung – unabhängig davon, in welchem Stapel du übst.
+          </p>
+        </div>
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Tabs
           value={filter}
@@ -133,7 +149,7 @@ export function LibraryView() {
                       />
                     ) : null}
                     <div>
-                      <h2 className="font-heading text-xl font-semibold">{title}</h2>
+                      <h3 className="font-heading text-xl font-semibold">{title}</h3>
                       <p className="text-sm text-muted-foreground">
                         {deck?.officialName ? `${deck.officialName} · ` : ""}
                         {deckCards.length}{" "}
@@ -189,6 +205,7 @@ export function LibraryView() {
           })}
         </div>
       )}
+      </section>
     </div>
   );
 }

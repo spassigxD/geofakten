@@ -128,10 +128,10 @@ function WorldMapPitch() {
           </h2>
           <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
             Die Weltkarte zeigt alle {sovereignStates.length} Staaten plus ihre
-            Außengebiete. Ein Klick öffnet ein Faktenblatt mit Hauptstadt,
-            Einwohnerzahl, Fläche, Amtssprachen, Staatsform und Währung – live
-            aus der deutschen Wikipedia, ganz ohne Anmeldung. Und wenn dir ein
-            Land gefällt, machst du daraus mit einem Klick neue Karteikarten.
+            Außengebiete. Ein Klick öffnet ein Faktenblatt – du suchst dir aus,
+            welche Angaben zu Karteikarten werden. Oder du übst gleich einen
+            ganzen Kontinent als eigenen Stapel. Live aus der deutschen
+            Wikipedia, ganz ohne Anmeldung.
           </p>
           <div className="mt-5 flex flex-wrap items-center gap-2">
             <Link
@@ -165,8 +165,8 @@ function WorldMapPitch() {
           />
           <MapPoint
             icon={<Globe2 className="size-4" />}
-            title="Auch offline brauchbar"
-            text={`Ohne Netz greift der gespeicherte Datensatz – inklusive Zwergstaaten wie ${smallestState.name}.`}
+            title="Auch als Stapel"
+            text={`Afrika, Asien, Europa – ein Kontinent, die Faktenarten deiner Wahl. Ohne Netz greift der gespeicherte Datensatz, inklusive Zwergstaaten wie ${smallestState.name}.`}
           />
         </ul>
       </div>

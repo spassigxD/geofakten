@@ -44,6 +44,8 @@ export interface Deck {
   id: string;
   countryName: string;
   officialName?: string;
+  /** Natural Earth ADM0_A3 when the deck came from the map. */
+  countryId?: string;
   facts: Fact[];
   thumbnail?: string;
   source: ExtractSource;
@@ -54,6 +56,7 @@ export interface Flashcard {
   id: string;
   deckId: string;
   countryName: string;
+  countryId?: string;
   question: string;
   answer: string;
   extraHint?: string;
@@ -68,12 +71,27 @@ export interface Flashcard {
   createdAt: number;
 }
 
+/**
+ * A named study stack: selected countries × selected fact types.
+ * Cards stay in the global library; the set only chooses which ones to drill.
+ */
+export interface StudySet {
+  id: string;
+  name: string;
+  continent?: ContinentId;
+  countryIds: string[];
+  categories: FactCategory[];
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface ExtractResult {
   source: ExtractSource;
   usedFallback: boolean;
   fallbackReason?: string;
   countryName: string;
   officialName?: string;
+  countryId?: string;
   facts: Fact[];
   cards: DraftCard[];
 }
@@ -81,6 +99,9 @@ export interface ExtractResult {
 export interface StoreData {
   cards: Flashcard[];
   decks: Deck[];
+  studySets: StudySet[];
+  /** `null` = every card in the library. */
+  activeStudySetId: string | null;
 }
 
 export type Rating = 1 | 2 | 3;

@@ -23,9 +23,10 @@ npm start
 ## Use it
 
 1. On the start page, upload a photo of an infobox, atlas page, or notes — or tap **Beispiel Venezuela**.
-2. Check the extracted facts, then save them to the library.
-3. Open **Lernen**, reveal the answer, and rate how well you knew it.
-4. Filter the library by learning bucket.
+2. Or open **Weltkarte**, tap a country (pick which facts become cards) or a whole continent.
+3. Check the extracted facts, then save them to the library.
+4. Open **Lernen**, optionally choose a Stapel, reveal the answer, and rate how well you knew it.
+5. Filter the library by learning bucket, or edit stacks there.
 
 Without an API key the app still works: it matches the filename against a built-in country set (or falls back to Venezuela) so you can demo the full study loop. Lage cards show a static continent map (Natural Earth, bundled) with the country highlighted — no map API key needed.
 
@@ -36,6 +37,16 @@ Every country and dependency on one pan- and zoomable map. Clicking a shape open
 - Zoom goes deep enough for micro-states; anything smaller than roughly 180 km across also gets a clickable dot so Monaco, Nauru, and Tuvalu stay hittable.
 - Mouse, touch (drag + pinch), and keyboard all work. The search box is a listbox combobox, and the map itself takes arrow keys, `+`/`-`, and `0`.
 - `/weltkarte#DEU` deep-links to a country by its Natural Earth `ADM0_A3` code.
+- **Vollbild** (labeled, top of the page / overlay chrome) expands the map to the viewport. The fact panel stays on the right; on smaller screens the bottom sheet still works. Pan, zoom, search, and continent stacks keep working. Escape or **Vollbild beenden** leaves fullscreen.
+- Tick the facts you want before **Als Karteikarten lernen** — at least one. A second save merges into the same country instead of duplicating ratings.
+
+### Lernstapel
+
+Named stacks live next to the global card pile. Create one from a continent on the map (Afrika, Asien, …) or in **Bibliothek → Stapel anlegen**. Each stack is a list of countries plus fact types (Hauptstadt, Lage, Einwohner, Fläche, Sprache, Staatsform, Währung). You can rename it, add/remove countries, and change the fact types. Deleting a stack does not delete the cards or their ratings.
+
+**Lernen** has a stack picker: **Alle Karten** or a named stack. Sessions still use the Nochmal lernen / Gut können / Sehr gut können buckets on whatever cards are in the chosen pile.
+
+Deep link: `/lernen?stapel=<id>`.
 
 ### Data sources
 
