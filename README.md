@@ -1,6 +1,6 @@
 # Geofakten
 
-German-language geography flashcards. Upload a photo of study material (for example a Wikipedia country infobox), turn it into cards, then review them. Ratings bucket cards into **Nochmal lernen**, **Gut können**, and **Sehr gut können**, and those buckets decide what comes up next.
+German-language geography flashcards plus an interactive world map. Upload a photo of study material (for example a Wikipedia country infobox) or click a country on the map, turn the facts into cards, then review them. Ratings bucket cards into **Nochmal lernen**, **Gut können**, and **Sehr gut können**, and those buckets decide what comes up next.
 
 Cards live in the browser (`localStorage`). There is no account and no database.
 
@@ -28,6 +28,31 @@ npm start
 4. Filter the library by learning bucket.
 
 Without an API key the app still works: it matches the filename against a built-in country set (or falls back to Venezuela) so you can demo the full study loop. Lage cards show a static continent map (Natural Earth, bundled) with the country highlighted — no map API key needed.
+
+## Weltkarte (`/weltkarte`)
+
+Every country and dependency on one pan- and zoomable map. Clicking a shape opens a fact sheet — side panel on desktop, bottom sheet on mobile — with capital, population, area, official languages, form of government, currency, head of state, and the Wikipedia intro. **Als Karteikarten lernen** turns that fact sheet into a deck without leaving the map.
+
+- Zoom goes deep enough for micro-states; anything smaller than roughly 180 km across also gets a clickable dot so Monaco, Nauru, and Tuvalu stay hittable.
+- Mouse, touch (drag + pinch), and keyboard all work. The search box is a listbox combobox, and the map itself takes arrow keys, `+`/`-`, and `0`.
+- `/weltkarte#DEU` deep-links to a country by its Natural Earth `ADM0_A3` code.
+
+### Data sources
+
+| What | Source | Licence |
+| --- | --- | --- |
+| Map geometry, German country names, ISO and Wikidata ids | [Natural Earth](https://www.naturalearthdata.com/) 1:50m Admin 0 countries | public domain |
+| Live facts (capital, population, area, languages, currency, government, heads of state) | [Wikidata](https://www.wikidata.org/) REST statements, fetched in the browser | CC0 |
+| Article intro, thumbnail, short description | [German Wikipedia](https://de.wikipedia.org/) REST summary, fetched in the browser | CC BY-SA 4.0 |
+| Offline fallback facts | Wikidata snapshot taken at build time, committed to the repo | CC0 |
+
+Both live APIs are CORS-enabled and need no key, so the map works on GitHub Pages with no server. Results are cached in memory and `localStorage` for 14 days; if the network is unavailable the panel falls back to the bundled snapshot and offers a retry.
+
+Regenerate the bundled data (writes `public/data/world-countries.topo.json` and `src/data/world-countries.meta.json`):
+
+```bash
+node scripts/build-world-data.mjs
+```
 
 ## Optional vision model
 

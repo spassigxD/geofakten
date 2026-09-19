@@ -25,7 +25,7 @@ export type FactCategory =
   | "waehrung"
   | "sonstiges";
 
-export type ExtractSource = "vision" | "mock";
+export type ExtractSource = "vision" | "mock" | "wikipedia";
 
 export interface Fact {
   label: string;

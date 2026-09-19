@@ -1,12 +1,20 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { BookOpen, Camera, MapPinned } from "lucide-react";
+import {
+  BookOpen,
+  Camera,
+  Globe2,
+  MapPinned,
+  MousePointerClick,
+  Search,
+} from "lucide-react";
 import Link from "next/link";
 import { StatsOverview } from "@/components/stats-overview";
 import { UploadPanel } from "@/components/upload-panel";
 import { buttonVariants } from "@/components/ui/button";
 import { dueCount } from "@/lib/repetition";
+import { WORLD_COUNTRIES } from "@/lib/world";
 import { useHydrated, useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -62,6 +70,8 @@ export function HomeView() {
 
       <UploadPanel />
 
+      <WorldMapPitch />
+
       {!hydrated ? (
         <LoadingBlock />
       ) : cards.length > 0 ? (
@@ -90,6 +100,99 @@ export function HomeView() {
         </p>
       )}
     </div>
+  );
+}
+
+const sovereignStates = WORLD_COUNTRIES.filter(
+  (country) => country.kind === "country"
+);
+
+const smallestState = sovereignStates
+  .filter((country) => (country.areaKm2 ?? 0) > 0)
+  .reduce((smallest, country) =>
+    (country.areaKm2 ?? Infinity) < (smallest.areaKm2 ?? Infinity)
+      ? country
+      : smallest
+  );
+
+function WorldMapPitch() {
+  return (
+    <section className="overflow-hidden rounded-3xl bg-card ring-1 ring-foreground/10">
+      <div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+        <div>
+          <p className="text-xs font-medium tracking-[0.22em] text-primary uppercase">
+            Neu: Weltkarte
+          </p>
+          <h2 className="font-heading mt-3 text-3xl leading-tight font-semibold tracking-tight">
+            Kein Foto zur Hand? Dann klick dir das Land einfach auf der Karte.
+          </h2>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
+            Die Weltkarte zeigt alle {sovereignStates.length} Staaten plus ihre
+            Außengebiete. Ein Klick öffnet ein Faktenblatt mit Hauptstadt,
+            Einwohnerzahl, Fläche, Amtssprachen, Staatsform und Währung – live
+            aus der deutschen Wikipedia, ganz ohne Anmeldung. Und wenn dir ein
+            Land gefällt, machst du daraus mit einem Klick neue Karteikarten.
+          </p>
+          <div className="mt-5 flex flex-wrap items-center gap-2">
+            <Link
+              href="/weltkarte"
+              className={cn(buttonVariants({ size: "lg" }), "h-10 px-4")}
+            >
+              <Globe2 />
+              Weltkarte öffnen
+            </Link>
+            <Link
+              href="/weltkarte#TUV"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "h-10 px-4"
+              )}
+            >
+              Beispiel: Tuvalu
+            </Link>
+          </div>
+        </div>
+        <ul className="grid gap-3">
+          <MapPoint
+            icon={<MousePointerClick className="size-4" />}
+            title="Antippen statt blättern"
+            text="Zoomen bis zu Kleinststaaten – selbst Monaco oder Nauru sind als Punkt markiert und treffsicher anklickbar."
+          />
+          <MapPoint
+            icon={<Search className="size-4" />}
+            title="Suche mit Tastatur"
+            text="Tippe „Namibia“ und spring direkt hin. Pfeiltasten verschieben die Karte, 0 zeigt wieder die ganze Welt."
+          />
+          <MapPoint
+            icon={<Globe2 className="size-4" />}
+            title="Auch offline brauchbar"
+            text={`Ohne Netz greift der gespeicherte Datensatz – inklusive Zwergstaaten wie ${smallestState.name}.`}
+          />
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function MapPoint({
+  icon,
+  title,
+  text,
+}: {
+  icon: ReactNode;
+  title: string;
+  text: string;
+}) {
+  return (
+    <li className="flex gap-3 rounded-2xl bg-muted/60 px-4 py-3">
+      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-background text-primary">
+        {icon}
+      </span>
+      <span>
+        <span className="block font-medium">{title}</span>
+        <span className="text-sm leading-6 text-muted-foreground">{text}</span>
+      </span>
+    </li>
   );
 }
 

@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# downloaded source data for scripts/build-world-data.mjs
+/.cache
+
 # debug
 npm-debug.log*
 yarn-debug.log*

@@ -139,6 +139,7 @@ export function LibraryView() {
                         {deckCards.length}{" "}
                         {deckCards.length === 1 ? "Karte" : "Karten"}
                         {deck?.source === "mock" ? " · Demo-Auswertung" : ""}
+                        {deck?.source === "wikipedia" ? " · Weltkarte" : ""}
                       </p>
                     </div>
                   </div>

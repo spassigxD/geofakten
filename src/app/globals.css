@@ -140,6 +140,87 @@
   }
 }
 
+/* Interactive world map (src/components/world-map.tsx). */
+.world-map {
+  --map-ocean: oklch(0.89 0.035 222);
+  --map-land: oklch(0.94 0.032 95);
+  --map-land-muted: oklch(0.9 0.02 100);
+  --map-border: oklch(0.75 0.03 95);
+  --map-hover: oklch(0.85 0.07 78);
+  --map-active: oklch(0.62 0.13 48);
+  --map-active-border: oklch(0.4 0.12 45);
+  --map-graticule: oklch(0.82 0.03 222);
+  --map-dot: oklch(0.42 0.08 170);
+}
+
+.dark .world-map {
+  --map-ocean: oklch(0.28 0.035 230);
+  --map-land: oklch(0.45 0.02 150);
+  --map-land-muted: oklch(0.38 0.015 150);
+  --map-border: oklch(0.32 0.02 150);
+  --map-hover: oklch(0.58 0.05 120);
+  --map-active: oklch(0.74 0.11 55);
+  --map-active-border: oklch(0.9 0.06 60);
+  --map-graticule: oklch(0.36 0.03 230);
+  --map-dot: oklch(0.86 0.06 170);
+}
+
+.world-ocean {
+  fill: var(--map-ocean);
+}
+
+.world-graticule {
+  fill: none;
+  stroke: var(--map-graticule);
+  stroke-width: 0.5;
+}
+
+.world-shape {
+  fill: var(--map-land);
+  stroke: var(--map-border);
+  stroke-width: 0.6;
+  stroke-linejoin: round;
+  cursor: pointer;
+  transition: fill 120ms ease-out;
+}
+
+.world-shape[data-kind="dependency"],
+.world-shape[data-kind="region"] {
+  fill: var(--map-land-muted);
+}
+
+.world-shape:hover {
+  fill: var(--map-hover);
+}
+
+.world-shape[data-selected="true"] {
+  fill: var(--map-active);
+}
+
+.world-shape-outline {
+  fill: none;
+  stroke: var(--map-active-border);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+
+.world-dot {
+  fill: var(--map-dot);
+  stroke: oklch(1 0 0 / 0.9);
+  stroke-width: 1.2;
+  cursor: pointer;
+}
+
+.world-dot[data-selected="true"] {
+  fill: var(--map-active);
+  stroke: var(--map-active-border);
+  stroke-width: 2;
+}
+
+.world-dot:hover {
+  fill: var(--map-active);
+}
+
 /* Study-card 3D flip: webkit prefixes + face masking so the answer cannot leak. */
 .study-flip {
   perspective: 1400px;
